@@ -1,0 +1,338 @@
+import {
+  Package,
+  Boxes,
+  TrendingUp,
+  IndianRupee,
+  AlertTriangle,
+  Users,
+  FileText,
+  ShoppingCart,
+  Tag,
+} from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { StatsCard } from "@/components/shared/StatsCard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DataTable } from "@/components/shared/DataTable";
+import { InvoiceStatusBadge } from "@/components/shared/InvoiceStatusBadge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  dashboardStats,
+  salesData,
+  categoryDistribution,
+  invoices,
+  lowStockProducts,
+} from "@/data/dummy";
+import { formatCurrency, formatNumber } from "@/lib/utils";
+import type { Invoice, Product } from "@/types";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+import { Link } from "react-router-dom";
+
+export default function DashboardPage() {
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Dashboard"
+        description="Welcome back, Mukti! Here's what's happening today."
+        breadcrumbs={[{ label: "Dashboard" }]}
+        actions={
+          <Button asChild>
+            <Link to="/billing">
+              <ShoppingCart className="h-4 w-4" />
+              New Invoice
+            </Link>
+          </Button>
+        }
+      />
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatsCard
+          title="Total Products"
+          value={formatNumber(dashboardStats.totalProducts)}
+          icon={<Package className="h-5 w-5 text-primary" />}
+          iconBg="bg-primary/10"
+          change={4.2}
+          changeLabel="vs last month"
+        />
+        <StatsCard
+          title="Total Categories"
+          value={formatNumber(dashboardStats.totalCategories)}
+          icon={<Tag className="h-5 w-5 text-indigo-600" />}
+          iconBg="bg-indigo-100 dark:bg-indigo-900/30"
+          description="Active categories"
+        />
+        <StatsCard
+          title="Total stockQuantity"
+          value={formatNumber(dashboardStats.totalStock)}
+          icon={<Boxes className="h-5 w-5 text-violet-600" />}
+          iconBg="bg-violet-100 dark:bg-violet-900/30"
+          change={-1.8}
+          changeLabel="vs last month"
+        />
+        <StatsCard
+          title="Today's Sales"
+          value={formatCurrency(dashboardStats.todaySales)}
+          icon={<IndianRupee className="h-5 w-5 text-emerald-600" />}
+          iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+          change={12.5}
+          changeLabel="vs yesterday"
+        />
+        <StatsCard
+          title="Monthly Revenue"
+          value={formatCurrency(dashboardStats.monthlyRevenue)}
+          icon={<TrendingUp className="h-5 w-5 text-amber-600" />}
+          iconBg="bg-amber-100 dark:bg-amber-900/30"
+          change={19.4}
+          changeLabel="vs last month"
+        />
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Low stockQuantity Items"
+          value={dashboardStats.lowStockItems}
+          icon={<AlertTriangle className="h-5 w-5 text-destructive" />}
+          iconBg="bg-destructive/10"
+          description="Needs attention"
+        />
+        <StatsCard
+          title="Total Customers"
+          value={formatNumber(dashboardStats.totalCustomers)}
+          icon={<Users className="h-5 w-5 text-blue-600" />}
+          iconBg="bg-blue-100 dark:bg-blue-900/30"
+          change={8.3}
+          changeLabel="vs last month"
+        />
+        <StatsCard
+          title="Pending Invoices"
+          value={dashboardStats.pendingInvoices}
+          icon={<FileText className="h-5 w-5 text-orange-600" />}
+          iconBg="bg-orange-100 dark:bg-orange-900/30"
+          description="Awaiting payment"
+        />
+        <StatsCard
+          title="Monthly Orders"
+          value={formatNumber(dashboardStats.monthlyOrders)}
+          icon={<ShoppingCart className="h-5 w-5 text-teal-600" />}
+          iconBg="bg-teal-100 dark:bg-teal-900/30"
+          change={10.6}
+          changeLabel="vs last month"
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Sales Graph */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Revenue Overview</CardTitle>
+            <CardDescription>Monthly revenue for the last 7 months</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={salesData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(221,83%,53%)" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="hsl(221,83%,53%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 12 }}
+                  className="text-muted-foreground"
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 12 }}
+                  className="text-muted-foreground"
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `₹${(v / 100000).toFixed(1)}L`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                  }}
+                  formatter={(value: number) => [
+                    formatCurrency(value),
+                    "Revenue",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="hsl(221,83%,53%)"
+                  strokeWidth={2.5}
+                  fill="url(#revenueGradient)"
+                  dot={false}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Category Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Category Distribution</CardTitle>
+            <CardDescription>Sales by category this month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={categoryDistribution}
+                  cx="50%"
+                  cy="45%"
+                  innerRadius={65}
+                  outerRadius={95}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {categoryDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "12px",
+                    fontSize: "13px",
+                  }}
+                  formatter={(value: number) => [`${value}%`, ""]}
+                />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => (
+                    <span style={{ fontSize: "12px", color: "hsl(var(--muted-foreground))" }}>
+                      {value}
+                    </span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Recent Invoices */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Recent Invoices</CardTitle>
+              <CardDescription>Latest billing activity</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/invoices">View all</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <DataTable<Invoice>
+              columns={[
+                {
+                  key: "invoiceNumber",
+                  header: "Invoice",
+                  render: (row) => (
+                    <span className="font-medium text-primary text-xs">
+                      {row.invoiceNumber}
+                    </span>
+                  ),
+                },
+                { key: "customerName", header: "Customer" },
+                {
+                  key: "total",
+                  header: "Amount",
+                  render: (row) => (
+                    <span className="font-semibold">
+                      {formatCurrency(row.total)}
+                    </span>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (row) => <InvoiceStatusBadge status={row.status} />,
+                },
+              ]}
+              data={invoices.slice(0, 5)}
+              keyExtractor={(row) => row.id}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Low stockQuantity Products */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Low stockQuantity Alert</CardTitle>
+              <CardDescription>Products below minimum threshold</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/products">View all</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <DataTable<Product>
+              columns={[
+                { key: "name", header: "Product" },
+                {
+                  key: "categoryName",
+                  header: "Category",
+                  render: (row) => (
+                    <Badge variant="secondary" className="text-xs">
+                      {row.categoryName}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "stockQuantity",
+                  header: "stockQuantity",
+                  render: (row) => (
+                    <span className="font-semibold text-destructive">
+                      {row.stockQuantity} {row.unit}
+                    </span>
+                  ),
+                },
+                {
+                  key: "minimumStock",
+                  header: "Min stockQuantity",
+                  render: (row) => (
+                    <span className="text-muted-foreground">{row.minimumStock}</span>
+                  ),
+                },
+              ]}
+              data={lowStockProducts}
+              keyExtractor={(row) => row.id}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
