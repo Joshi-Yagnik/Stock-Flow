@@ -35,9 +35,19 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class SendOtpRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyOtpRequest(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]+$")
+
+
 # ─── User ────────────────────────────────────────────────────────────────────
 class UserBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
+    shop_name: Optional[str] = Field(None, max_length=100)
     email: EmailStr
     role: str = Field(default="staff", pattern="^(owner|staff)$")
 

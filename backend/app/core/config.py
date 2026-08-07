@@ -43,5 +43,12 @@ class Settings(BaseSettings):
     DEFAULT_CURRENCY: str = "INR"
     DEFAULT_LOW_STOCK_THRESHOLD: int = 10
 
+    # SMTP Configuration
+    EMAIL_HOST: str = "smtp.gmail.com"
+    EMAIL_PORT: int = 587
+    EMAIL_USERNAME: str = ""
+    EMAIL_PASSWORD: str = ""
+    EMAIL_FROM: str = ""
+
 
 settings = Settings()

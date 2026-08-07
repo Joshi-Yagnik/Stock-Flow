@@ -5,8 +5,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 // Auth Pages
-import LoginPage from "@/pages/auth/LoginPage";
-import RegisterPage from "@/pages/auth/RegisterPage";
+import AuthPage from "@/pages/auth/AuthPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 
 // App Pages
@@ -36,7 +35,7 @@ const ProtectedRoute = ({ children, requireOwner = false }: { children: React.Re
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
   if (requireOwner && user?.role !== "owner") {
@@ -52,8 +51,9 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
+      <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/login" element={<Navigate to="/auth" state={{ isRegister: false }} replace />} />
+      <Route path="/register" element={<Navigate to="/auth" state={{ isRegister: true }} replace />} />
       <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
 
       {/* Protected App Routes */}

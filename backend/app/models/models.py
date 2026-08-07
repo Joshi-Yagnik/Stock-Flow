@@ -41,6 +41,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    shop_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     role: Mapped[str] = mapped_column(
         SAEnum("owner", "staff", name="user_role"),
         default="staff",
@@ -60,6 +61,23 @@ class User(Base):
     invoices: Mapped[List["Invoice"]] = relationship(back_populates="created_by_user")
     categories: Mapped[List["Category"]] = relationship(back_populates="owner")
     products: Mapped[List["Product"]] = relationship(back_populates="owner")
+
+
+# ─── Email Verification ───────────────────────────────────────────────────────
+class EmailVerification(Base):
+    __tablename__ = "email_verifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    otp_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
 
 
 # ─── Category ─────────────────────────────────────────────────────────────────

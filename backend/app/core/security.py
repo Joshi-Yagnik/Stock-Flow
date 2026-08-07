@@ -26,6 +26,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+# ─── OTP Utilities ────────────────────────────────────────────────────────────
+import secrets
+
+def generate_otp(length: int = 6) -> str:
+    """Generate a cryptographically secure numeric OTP."""
+    digits = "0123456789"
+    return "".join(secrets.choice(digits) for _ in range(length))
+
+
 # ─── JWT Tokens ───────────────────────────────────────────────────────────────
 def create_access_token(
     data: Dict[str, Any],
