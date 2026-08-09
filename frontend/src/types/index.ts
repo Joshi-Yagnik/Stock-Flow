@@ -2,7 +2,7 @@
 export interface User {
   id: string;
   name: string;
-  email: string;
+  mobileNumber: string;
   role: "admin" | "manager" | "staff";
   avatar?: string;
   createdAt: string;
@@ -50,7 +50,7 @@ export interface Product {
 export interface Customer {
   id: string;
   name: string;
-  email: string;
+  mobileNumber: string;
   phone: string;
   company?: string;
   address: string;

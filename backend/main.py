@@ -22,6 +22,7 @@ from app.routers import (
 # Ensure uploads directory exists
 os.makedirs("uploads/products", exist_ok=True)
 
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="Smart Inventory & Billing API for Modern Wholesalers",

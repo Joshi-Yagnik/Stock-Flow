@@ -8,14 +8,16 @@ const api = axios.create({
   },
 });
 
+import { supabase } from './supabase';
+
 // Request interceptor to attach JWT token
 api.interceptors.request.use(
-  (config) => {
-    // Check both localStorage and sessionStorage for Remember Me support
-    const token = localStorage.getItem('sf-token') || sessionStorage.getItem('sf-token');
+  async (config) => {
+    // Get the current Supabase session
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
     }
     
     return config;
@@ -25,21 +27,18 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle 401s and token expiration
+// Response interceptor to handle 401s
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
     // If we receive a 401 and we aren't already on the login page
-    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
-      // Clear tokens
-      localStorage.removeItem('sf-token');
-      sessionStorage.removeItem('sf-token');
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
+      // Clear supabase session if needed or just redirect
+      await supabase.auth.signOut();
       
-      // Optionally handle refresh token logic here if we were using a more advanced refresh flow.
-      // For now, redirect to login.
-      window.location.href = '/login';
+      window.location.href = '/auth';
     }
     
     return Promise.reject(error);

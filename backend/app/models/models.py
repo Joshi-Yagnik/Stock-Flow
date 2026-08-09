@@ -33,14 +33,13 @@ def gen_uuid() -> str:
     return str(uuid.uuid4())
 
 
-# ─── User ─────────────────────────────────────────────────────────────────────
+# ─── User (Profile) ─────────────────────────────────────────────────────────────
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "profiles"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column("full_name", String(100), nullable=False)
+    mobile_number: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True, index=True)
     shop_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     role: Mapped[str] = mapped_column(
         SAEnum("owner", "staff", name="user_role"),
@@ -49,7 +48,6 @@ class User(Base):
     )
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow
     )
@@ -63,12 +61,12 @@ class User(Base):
     products: Mapped[List["Product"]] = relationship(back_populates="owner")
 
 
-# ─── Email Verification ───────────────────────────────────────────────────────
-class EmailVerification(Base):
-    __tablename__ = "email_verifications"
+# ─── Mobile Verification ───────────────────────────────────────────────────────
+class MobileVerification(Base):
+    __tablename__ = "mobile_verifications"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    mobile_number: Mapped[str] = mapped_column(String(15), unique=True, nullable=False, index=True)
     otp_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
@@ -88,7 +86,7 @@ class Category(Base):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
-    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
     color: Mapped[str] = mapped_column(String(20), default="#3b82f6")
@@ -108,7 +106,7 @@ class Product(Base):
     __tablename__ = "products"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
-    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     sku: Mapped[Optional[str]] = mapped_column(String(100), unique=True, nullable=True, index=True)
     barcode: Mapped[Optional[str]] = mapped_column(String(100), unique=True, index=True)
@@ -141,7 +139,7 @@ class Customer(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
     name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    mobile_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     company: Mapped[Optional[str]] = mapped_column(String(200))
     address: Mapped[Optional[str]] = mapped_column(Text)
@@ -165,7 +163,7 @@ class Invoice(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
     invoice_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     customer_id: Mapped[str] = mapped_column(ForeignKey("customers.id"), nullable=False)
-    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
     subtotal: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
     tax_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=18)
     tax_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0)
@@ -222,7 +220,7 @@ class StockTransaction(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)  # negative for outflow
     reference: Mapped[Optional[str]] = mapped_column(String(100))  # Invoice # / PO #
     notes: Mapped[Optional[str]] = mapped_column(Text)
-    created_by: Mapped[Optional[str]] = mapped_column(ForeignKey("users.id"))
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     # Relationships

@@ -32,14 +32,14 @@ async def init_db():
             print("Seeding users...")
             owner = User(
                 name="System Owner",
-                email="owner@stockflow.com",
+                mobile_number="9999999999",
                 hashed_password=hash_password("owner123"),
                 role="owner",
                 is_active=True
             )
             staff = User(
                 name="Staff Member",
-                email="staff@stockflow.com",
+                mobile_number="8888888888",
                 hashed_password=hash_password("staff123"),
                 role="staff",
                 is_active=True

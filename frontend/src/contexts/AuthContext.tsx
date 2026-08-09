@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import api from '@/lib/axios';
+import { supabase } from '@/lib/supabase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   role: 'owner' | 'staff';
   avatar_url?: string;
   is_active: boolean;
@@ -14,8 +15,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, rememberMe: boolean) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -25,23 +25,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('sf-token') || sessionStorage.getItem('sf-token');
-    
-    if (!token) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
+  const mapSupabaseUser = (sbUser: SupabaseUser | null): User | null => {
+    if (!sbUser) return null;
+    return {
+      id: sbUser.id,
+      name: sbUser.user_metadata?.full_name || sbUser.email || 'User',
+      email: sbUser.email,
+      role: 'owner', // Default role for now
+      avatar_url: sbUser.user_metadata?.avatar_url,
+      is_active: true,
+    };
+  };
 
+  const checkAuth = async () => {
     try {
-      // Use the me endpoint to validate token and fetch user
-      const response = await api.get('/users/me');
-      setUser(response.data);
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(mapSupabaseUser(session?.user ?? null));
     } catch (error) {
+      console.error("Error checking auth session:", error);
       setUser(null);
-      localStorage.removeItem('sf-token');
-      sessionStorage.removeItem('sf-token');
     } finally {
       setIsLoading(false);
     }
@@ -49,26 +51,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(mapSupabaseUser(session?.user ?? null));
+        setIsLoading(false);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (token: string, rememberMe: boolean) => {
-    // Clear both first to be safe
-    localStorage.removeItem('sf-token');
-    sessionStorage.removeItem('sf-token');
-
-    if (rememberMe) {
-      localStorage.setItem('sf-token', token);
-    } else {
-      sessionStorage.setItem('sf-token', token);
-    }
-    
-    // Once token is saved, api interceptor will pick it up
-    await checkAuth();
-  };
-
-  const logout = () => {
-    localStorage.removeItem('sf-token');
-    sessionStorage.removeItem('sf-token');
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
@@ -78,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
-        login,
         logout,
         checkAuth,
       }}

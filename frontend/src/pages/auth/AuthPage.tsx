@@ -1,19 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Sun, Moon, Zap, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Sun, Moon, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
-import api from "@/lib/axios";
+import { supabase } from "@/lib/supabase";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   rememberMe: z.boolean().default(false),
 });
@@ -22,9 +21,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 const registerSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    shopName: z.string().max(100).optional(),
-    email: z.string().email("Please enter a valid email address."),
+    fullName: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email address"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -39,13 +37,10 @@ const registerSchema = z
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
-type EmailStatus = "idle" | "sending" | "sent" | "verified";
-
 export default function AuthPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { resolvedTheme, setTheme } = useTheme();
-  const { login } = useAuth();
   
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -71,146 +66,74 @@ export default function AuthPage() {
   const {
     register: registerSignup,
     handleSubmit: handleRegisterSubmit,
-    watch: watchSignup,
     formState: { errors: registerErrors, isSubmitting: isRegisterSubmitting, isValid: isRegisterValid },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     mode: "onChange",
-    defaultValues: { name: "", shopName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
   });
-
-  const signupEmail = watchSignup("email");
-
-  // OTP State
-  const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle");
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
-  const [resendTimer, setResendTimer] = useState<number>(0);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // Reset OTP state when email changes (unless verified)
-  useEffect(() => {
-    if (emailStatus !== "verified" && emailStatus !== "idle") {
-      setEmailStatus("idle");
-      setOtp(Array(6).fill(""));
-      setResendTimer(0);
-    }
-  }, [signupEmail]);
-
-  // Resend Timer
-  useEffect(() => {
-    let timer: any;
-    if (resendTimer > 0) {
-      timer = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [resendTimer]);
-
-  const handleSendOtp = async () => {
-    if (!signupEmail || registerErrors.email) return;
-    try {
-      setEmailStatus("sending");
-      await api.post("/auth/send-otp", { email: signupEmail });
-      setEmailStatus("sent");
-      setResendTimer(30);
-      toast.success("OTP sent successfully");
-      
-      // Focus first OTP input after a short delay
-      setTimeout(() => {
-        otpRefs.current[0]?.focus();
-      }, 100);
-    } catch (error: any) {
-      setEmailStatus("idle");
-      toast.error(error.response?.data?.detail || "Failed to send OTP");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    const otpString = otp.join("");
-    if (otpString.length !== 6) return;
-    
-    try {
-      setIsVerifying(true);
-      await api.post("/auth/verify-otp", {
-        email: signupEmail,
-        otp: otpString
-      });
-      setEmailStatus("verified");
-      toast.success("Email Verified Successfully");
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Incorrect OTP. Please try again.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^[0-9]*$/.test(value)) return;
-    
-    const newOtp = [...otp];
-    // Take only the last character if multiple are typed somehow
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-
-    // Auto advance
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
-    if (!pastedData) return;
-    
-    const newOtp = [...otp];
-    for (let i = 0; i < pastedData.length; i++) {
-      if (i < 6) newOtp[i] = pastedData[i];
-    }
-    setOtp(newOtp);
-    
-    const focusIndex = Math.min(pastedData.length, 5);
-    otpRefs.current[focusIndex]?.focus();
-  };
 
   const onLoginSubmit = async (data: LoginForm) => {
     try {
-      const response = await api.post("/auth/login", {
+      const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
-      const { access_token } = response.data;
-      await login(access_token, data.rememberMe);
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
       toast.success("Login successful! 👋");
       navigate("/dashboard");
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Invalid email or password");
+      toast.error(error.message || "Invalid email or password");
     }
   };
 
   const onRegisterSubmit = async (data: RegisterForm) => {
-    if (emailStatus !== "verified") {
-      toast.error("Please verify your email first.");
-      return;
-    }
     try {
-      await api.post("/auth/register", {
-        name: data.name,
-        shop_name: data.shopName || null,
+      const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        role: "owner"
+        options: {
+          data: {
+            full_name: data.fullName
+          }
+        }
       });
-      toast.success("Account created! Please log in. 🎉");
-      setIsFlipped(false);
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      if (authData.session) {
+        toast.success("Account created successfully! 🎉");
+        navigate("/dashboard");
+      } else {
+        toast.success("Account created! Please check your email to verify your account.");
+        setIsFlipped(false);
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to create account");
+      toast.error(error.message || "Failed to create account");
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to initialize Google signup");
     }
   };
 
@@ -264,12 +187,12 @@ export default function AuthPage() {
 
               <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-3 md:space-y-4" noValidate>
                 <div>
-                  <Label htmlFor="login-email" className={labelClassName}>Email Address</Label>
+                  <Label htmlFor="login-email" className={labelClassName}>Email</Label>
                   <Input
                     id="login-email"
                     type="email"
                     autoComplete="email"
-                    placeholder="Enter your email address"
+                    placeholder="name@example.com"
                     {...registerLogin("email")}
                     className={`${inputClassName} ${loginErrors.email ? "border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500" : ""}`}
                   />
@@ -334,6 +257,32 @@ export default function AuthPage() {
                 </Button>
               </form>
 
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[rgba(255,255,255,0.1)]"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[rgba(20,24,40,0.45)] px-2 text-[rgba(255,255,255,0.5)]">
+                    OR CONTINUE WITH
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-10 md:h-11 rounded-[12px] bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-white hover:bg-[rgba(255,255,255,0.08)] transition-all font-medium flex items-center justify-center space-x-2 border"
+                onClick={handleGoogleSignup}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Sign in with Google</span>
+              </Button>
+
               <p className="mt-5 md:mt-6 text-center text-[13px] md:text-[14px] text-[rgba(255,255,255,0.6)]">
                 Don't have an account?{" "}
                 <button
@@ -348,7 +297,7 @@ export default function AuthPage() {
 
             {/* BACK SIDE (Register) */}
             <div 
-              className={`${cardClassName} rotate-y-180 transition-all overflow-hidden ${emailStatus === 'sent' ? 'pb-8' : ''}`}
+              className={`${cardClassName} rotate-y-180 transition-all overflow-hidden`}
               style={{ gridArea: "1 / 1 / 2 / 2" }}
             >
               <div className="mb-4 md:mb-5 text-center">
@@ -364,118 +313,27 @@ export default function AuthPage() {
                   <Input
                     id="reg-name"
                     placeholder="Enter your full name"
-                    {...registerSignup("name")}
-                    className={`${inputClassName} ${registerErrors.name ? "border-red-500" : ""}`}
+                    {...registerSignup("fullName")}
+                    className={`${inputClassName} ${registerErrors.fullName ? "border-red-500" : ""}`}
                   />
-                  {registerErrors.name && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.name.message}</p>
+                  {registerErrors.fullName && (
+                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.fullName.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-shop" className={labelClassName}>Shop Name (Optional)</Label>
+                  <Label htmlFor="reg-email" className={labelClassName}>Email *</Label>
                   <Input
-                    id="reg-shop"
-                    placeholder="Enter your shop name"
-                    {...registerSignup("shopName")}
-                    className={`${inputClassName} ${registerErrors.shopName ? "border-red-500" : ""}`}
+                    id="reg-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    {...registerSignup("email")}
+                    className={`${inputClassName} ${registerErrors.email ? "border-red-500" : ""}`}
                   />
-                  {registerErrors.shopName && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.shopName.message}</p>
-                  )}
-                </div>
-
-                {/* Email Verification Flow */}
-                <div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="reg-email" className={labelClassName}>Email Address *</Label>
-                    {emailStatus === "verified" && (
-                      <span className="flex items-center text-[12px] md:text-[13px] text-green-400 font-medium mb-1 animate-in fade-in zoom-in duration-300">
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                        Verified
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Input
-                      id="reg-email"
-                      type="email"
-                      placeholder="Enter your email address"
-                      autoComplete="email"
-                      disabled={emailStatus === "verified"}
-                      {...registerSignup("email")}
-                      className={`${inputClassName} flex-1 ${registerErrors.email ? "border-red-500" : ""} ${emailStatus === "verified" ? "opacity-60 bg-green-500/5 border-green-500/20 text-green-100" : ""}`}
-                    />
-                    
-                    {/* Show Verify Button if valid email and not sent/verified */}
-                    {signupEmail && !registerErrors.email && emailStatus === "idle" && (
-                      <Button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={emailStatus === "sending"}
-                        className="h-10 md:h-11 px-4 rounded-[12px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-all"
-                      >
-                        {emailStatus === "sending" ? "Sending..." : "Verify"}
-                      </Button>
-                    )}
-                  </div>
-                  
                   {registerErrors.email && (
                     <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.email.message}</p>
                   )}
                 </div>
-
-                {/* OTP Input Section */}
-                {emailStatus === "sent" && (
-                  <div className="pt-2 pb-1 animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="bg-[rgba(0,0,0,0.2)] p-4 rounded-[16px] border border-[rgba(255,255,255,0.05)]">
-                      <Label className="text-white/80 font-medium mb-2 block text-center text-[12px] md:text-[13px]">
-                        Enter the 6-digit OTP sent to your email
-                      </Label>
-                      
-                      <div className="flex justify-center space-x-2 md:space-x-3 mb-4">
-                        {otp.map((digit, index) => (
-                          <input
-                            key={index}
-                            ref={(el) => (otpRefs.current[index] = el)}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => handleOtpChange(index, e.target.value)}
-                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                            onPaste={handleOtpPaste}
-                            className="w-10 h-12 md:w-12 md:h-14 text-center text-xl md:text-2xl font-bold bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-[12px] text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                          />
-                        ))}
-                      </div>
-                      
-                      <Button
-                        type="button"
-                        onClick={handleVerifyOtp}
-                        disabled={otp.join("").length !== 6 || isVerifying}
-                        className="w-full h-10 rounded-[10px] bg-white text-black hover:bg-gray-200 font-medium transition-all mb-3 disabled:opacity-50"
-                      >
-                        {isVerifying ? "Verifying..." : "Verify OTP"}
-                      </Button>
-                      
-                      <div className="text-center text-[12px] md:text-[13px]">
-                        {resendTimer > 0 ? (
-                          <span className="text-white/50">Resend OTP in {resendTimer}s</span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleSendOtp}
-                            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-                          >
-                            Resend OTP
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div>
                   <Label htmlFor="reg-password" className={labelClassName}>Password *</Label>
@@ -521,11 +379,37 @@ export default function AuthPage() {
                   type="submit"
                   className="w-full h-10 md:h-11 mt-4 rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white text-[15px] font-medium border-0 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
                   loading={isRegisterSubmitting}
-                  disabled={!isRegisterValid || isRegisterSubmitting || emailStatus !== "verified"}
+                  disabled={!isRegisterValid || isRegisterSubmitting}
                 >
                   {isRegisterSubmitting ? "Creating account…" : "Create Account"}
                 </Button>
               </form>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[rgba(255,255,255,0.1)]"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[rgba(20,24,40,0.45)] px-2 text-[rgba(255,255,255,0.5)]">
+                    OR CONTINUE WITH
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-10 md:h-11 rounded-[12px] bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-white hover:bg-[rgba(255,255,255,0.08)] transition-all font-medium flex items-center justify-center space-x-2 border"
+                onClick={handleGoogleSignup}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Sign up with Google</span>
+              </Button>
 
               <p className="mt-4 md:mt-5 text-center text-[13px] md:text-[14px] text-[rgba(255,255,255,0.6)]">
                 Already have an account?{" "}

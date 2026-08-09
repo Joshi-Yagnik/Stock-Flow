@@ -33,7 +33,7 @@ export default function CustomersPage() {
   const filtered = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      c.mobileNumber.toLowerCase().includes(search.toLowerCase()) ||
       (c.company ?? "").toLowerCase().includes(search.toLowerCase()) ||
       c.city.toLowerCase().includes(search.toLowerCase())
   );
@@ -60,7 +60,7 @@ export default function CustomersPage() {
           id="customers-search"
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
-          placeholder="Search by name, email or company…"
+          placeholder="Search by name, mobileNumber or company…"
           className="w-full sm:w-80"
         />
       </div>
@@ -90,13 +90,13 @@ export default function CustomersPage() {
             ),
           },
           {
-            key: "email",
+            key: "mobileNumber",
             header: "Contact",
             render: (row) => (
               <div>
                 <p className="flex items-center gap-1.5 text-sm">
                   <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                  {row.email}
+                  {row.mobileNumber}
                 </p>
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                   <Phone className="h-3 w-3" />
@@ -210,8 +210,8 @@ export default function CustomersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="cust-email">Email *</Label>
-                <Input id="cust-email" type="email" placeholder="rajesh@example.com" />
+                <Label htmlFor="cust-mobileNumber">Email *</Label>
+                <Input id="cust-mobileNumber" type="mobileNumber" placeholder="rajesh@example.com" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cust-phone">Phone *</Label>

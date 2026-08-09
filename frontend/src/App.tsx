@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 // Auth Pages
 import AuthPage from "@/pages/auth/AuthPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import AuthCallback from "@/pages/auth/AuthCallback";
 
 // App Pages
 import DashboardPage from "@/pages/dashboard/DashboardPage";
@@ -52,6 +53,7 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/login" element={<Navigate to="/auth" state={{ isRegister: false }} replace />} />
       <Route path="/register" element={<Navigate to="/auth" state={{ isRegister: true }} replace />} />
       <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />

@@ -61,29 +61,26 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def decode_token(token: str) -> Dict[str, Any]:
-    """Decode and validate a JWT token. Raises HTTPException on failure."""
+from supabase import create_client, Client
+
+supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+
+async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
+    """FastAPI dependency: extract user UUID from Supabase Bearer token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        return payload
-    except JWTError:
+        # Validate token against Supabase Auth service
+        user_response = supabase.auth.get_user(token)
+        
+        if not user_response or not user_response.user:
+            raise credentials_exception
+            
+        return user_response.user.id
+    except Exception as e:
+        print(f"Auth error: {e}")
         raise credentials_exception
-
-
-async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
-    """FastAPI dependency: extract user_id from bearer token."""
-    payload = decode_token(token)
-    user_id: Optional[str] = payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
-    return user_id

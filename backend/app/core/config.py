@@ -6,11 +6,21 @@ from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Explicitly find and load the backend/.env file from the backend directory
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+ENV_FILE_PATH = BASE_DIR / ".env"
+load_dotenv(dotenv_path=ENV_FILE_PATH, override=True)
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE_PATH),
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore"
     )
 
     # App
@@ -30,6 +40,7 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:3000",
         "https://stockflow.app",
     ]
@@ -43,12 +54,9 @@ class Settings(BaseSettings):
     DEFAULT_CURRENCY: str = "INR"
     DEFAULT_LOW_STOCK_THRESHOLD: int = 10
 
-    # SMTP Configuration
-    EMAIL_HOST: str = "smtp.gmail.com"
-    EMAIL_PORT: int = 587
-    EMAIL_USERNAME: str = ""
-    EMAIL_PASSWORD: str = ""
-    EMAIL_FROM: str = ""
+    # Supabase
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
 
 
 settings = Settings()

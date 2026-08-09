@@ -21,7 +21,7 @@ class PaginatedResponse(BaseModel):
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
 class LoginRequest(BaseModel):
-    email: EmailStr
+    mobile_number: str = Field(..., min_length=10, max_length=15)
     password: str
 
 
@@ -36,11 +36,11 @@ class RefreshRequest(BaseModel):
 
 
 class SendOtpRequest(BaseModel):
-    email: EmailStr
+    mobile_number: str = Field(..., min_length=10, max_length=15)
 
 
 class VerifyOtpRequest(BaseModel):
-    email: EmailStr
+    mobile_number: str = Field(..., min_length=10, max_length=15)
     otp: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]+$")
 
 
@@ -48,7 +48,7 @@ class VerifyOtpRequest(BaseModel):
 class UserBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     shop_name: Optional[str] = Field(None, max_length=100)
-    email: EmailStr
+    mobile_number: str = Field(..., min_length=10, max_length=15)
     role: str = Field(default="staff", pattern="^(owner|staff)$")
 
 
@@ -58,7 +58,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100)
-    email: Optional[EmailStr] = None
+    mobile_number: Optional[str] = Field(None, min_length=10, max_length=15)
     avatar_url: Optional[str] = None
 
 

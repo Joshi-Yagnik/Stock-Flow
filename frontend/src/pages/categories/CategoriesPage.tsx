@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -197,9 +198,20 @@ export default function CategoriesPage() {
             />
           ))}
           {categories.length === 0 && (
-            <div className="col-span-full text-center py-16 text-muted-foreground">
-              <Tag className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="font-medium">No categories found</p>
+            <div className="col-span-full rounded-xl border border-border overflow-hidden">
+              <div className="bg-card">
+                <EmptyState
+                  icon={<Tag className="h-8 w-8 text-muted-foreground" />}
+                  title="No categories found"
+                  description="Get started by adding your first category."
+                  action={
+                    <Button onClick={handleOpenAdd}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Category
+                    </Button>
+                  }
+                />
+              </div>
             </div>
           )}
         </div>
