@@ -1,141 +1,149 @@
-# ⚡ StockFlow
+<div align="center">
+  <h1>⚡ StockFlow</h1>
+  <p><strong>Smart Inventory & Billing for Modern Wholesalers</strong></p>
+  
+  <p>
+    <a href="https://github.com/anuj-kanthariya/Stock-Flow/stargazers"><img src="https://img.shields.io/github/stars/anuj-kanthariya/Stock-Flow?style=flat-square&color=blue" alt="Stars"></a>
+    <a href="https://github.com/anuj-kanthariya/Stock-Flow/network/members"><img src="https://img.shields.io/github/forks/anuj-kanthariya/Stock-Flow?style=flat-square&color=blue" alt="Forks"></a>
+    <a href="https://github.com/anuj-kanthariya/Stock-Flow/issues"><img src="https://img.shields.io/github/issues/anuj-kanthariya/Stock-Flow?style=flat-square&color=blue" alt="Issues"></a>
+    <a href="https://github.com/anuj-kanthariya/Stock-Flow/blob/main/LICENSE"><img src="https://img.shields.io/github/license/anuj-kanthariya/Stock-Flow?style=flat-square&color=blue" alt="License"></a>
+  </p>
+</div>
 
-> **Smart Inventory & Billing for Modern Wholesalers**
+---
 
-StockFlow is a production-ready, full-stack SaaS application built for wholesale businesses. It provides a modern, intuitive interface for managing products, customers, invoices, and business analytics — all in one place.
+**StockFlow** is a production-ready, full-stack SaaS application built for wholesale businesses. It provides a modern, intuitive interface for managing products, customers, invoices, and business analytics — all in one centralized platform.
+
+## 📑 Table of Contents
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+- [API Reference](#-api-reference)
+- [Project Structure](#-project-structure)
+- [License](#-license)
+
+---
+
+## ✨ Key Features
+
+- **Real-Time Inventory Management**: Track stock levels, set low-stock alerts, and manage product variations effortlessly.
+- **Smart Billing & Invoicing**: Generate dynamic PDF invoices, apply automated tax calculations, and process instant billing.
+- **Advanced Analytics Dashboard**: Gain insights with visual data representations, sales tracking, and KPI monitoring.
+- **Role-Based Access Control**: Secure authentication and authorization for different user levels (Admin, Manager, Staff).
+- **Responsive & Modern UI**: A clean, accessible, and fully responsive interface powered by Tailwind CSS and Radix UI.
 
 ---
 
 ## 🚀 Tech Stack
 
-### Frontend
-| Technology | Purpose |
-|---|---|
-| **React 18** | UI library |
-| **Vite 5** | Build tool & dev server |
-| **TypeScript** | Type safety |
-| **Tailwind CSS v3** | Utility-first styling |
-| **Shadcn UI / Radix** | Accessible component primitives |
-| **React Router v6** | Client-side routing |
-| **TanStack Query** | Server state management |
-| **Recharts** | Charts & analytics |
+### Frontend Architecture
+- **Framework**: React 18 & Vite 5
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v3, Shadcn UI
+- **State Management**: TanStack Query
+- **Routing**: React Router v6
+- **Data Visualization**: Recharts
 
-### Backend
-| Technology | Purpose |
-|---|---|
-| **FastAPI** | High-performance Python API |
-| **SQLAlchemy 2.0** | Async ORM |
-| **PostgreSQL** | Primary database |
-| **Alembic** | Database migrations |
-| **Pydantic v2** | Data validation |
-| **python-jose** | JWT authentication |
+### Backend Architecture
+- **Framework**: FastAPI
+- **Database**: PostgreSQL
+- **ORM & Migrations**: SQLAlchemy 2.0 & Alembic
+- **Validation**: Pydantic v2
+- **Security**: JWT Authentication (python-jose), Passlib (bcrypt)
 
 ---
 
-## 🏃 Installation & Setup
+## 🏃 Getting Started
 
 ### Prerequisites
-- Node.js ≥ 18.0
-- Python ≥ 3.11
-- PostgreSQL ≥ 15
+Before you begin, ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (v18.0 or higher)
+- [Python](https://www.python.org/) (v3.11 or higher)
+- [PostgreSQL](https://www.postgresql.org/) (v15 or higher)
 
-### 1. Clone & Navigate
+### 1. Installation
+
+Clone the repository and set up the frontend and backend environments:
+
 ```bash
-git clone https://github.com/your-org/stockflow.git
-cd stockflow
+git clone https://github.com/anuj-kanthariya/Stock-Flow.git
+cd Stock-Flow
 ```
 
-### 2. Frontend Setup
+#### Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
-# → http://localhost:5173
+# Application will run on http://localhost:5173
 ```
 
-### 3. Backend Setup
+#### Backend Setup
 ```bash
 cd backend
 
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv .venv
-.venv\Scripts\activate         # Windows
-# source .venv/bin/activate    # macOS/Linux
+# Windows: .venv\Scripts\activate 
+# macOS/Linux: source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure environment
-copy .env.example .env
-# Edit .env with your PostgreSQL credentials
-
-# Run database migrations
-alembic upgrade head
-
-# Start server
-uvicorn main:app --reload --port 8000
-# → http://localhost:8000/api/docs
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your database credentials
 ```
 
-### 4. Create PostgreSQL Database
+### 2. Database Configuration
+
+Create the PostgreSQL database and user:
 ```sql
 CREATE USER stockflow_user WITH PASSWORD 'stockflow_pass';
 CREATE DATABASE stockflow_db OWNER stockflow_user;
 GRANT ALL PRIVILEGES ON DATABASE stockflow_db TO stockflow_user;
 ```
 
----
-
-## 🔑 Default Credentials (Dev Mode)
-
-| Field | Value |
-|---|---|
-| Email | `admin@stockflow.app` |
-| Password | `password123` |
-
----
-
-## 📡 API Documentation
-
-Once the backend is running, visit:
-- **Swagger UI**: http://localhost:8000/api/docs
-- **ReDoc**: http://localhost:8000/api/redoc
-
-### Key Endpoints
-```
-POST   /api/v1/auth/login           → Get JWT tokens
-POST   /api/v1/auth/refresh         → Refresh access token
-
-GET    /api/v1/products             → List products (paginated)
-POST   /api/v1/products             → Create product
-PATCH  /api/v1/products/{id}        → Update product
-
-GET    /api/v1/invoices             → List invoices
-POST   /api/v1/invoices             → Create invoice
-GET    /api/v1/invoices/{id}/pdf    → Download PDF
-
-GET    /api/v1/reports/dashboard    → Dashboard KPIs
-GET    /api/v1/reports/sales        → Sales analytics
-GET    /api/v1/stock/low-stock      → Low stock products
+Apply database migrations and start the server:
+```bash
+alembic upgrade head
+uvicorn main:app --reload --port 8000
+# API will run on http://localhost:8000
 ```
 
----
-
-## 🗺️ Pages Overview
-
-| Route | Page | Description |
+### 3. Default Credentials (Dev Mode)
+| Role | Email | Password |
 |---|---|---|
-| `/login` | Login | JWT authentication with form validation |
-| `/register` | Register | Account creation with password rules |
-| `/dashboard` | Dashboard | KPI cards, charts, recent invoices |
-| `/products` | Products | Inventory table with CRUD |
-| `/categories` | Categories | Card grid with color tags |
-| `/customers` | Customers | Customer list with contact info |
-| `/billing` | Billing | Real-time invoice builder |
-| `/invoices` | Invoices | Invoice list with status filters |
-| `/reports` | Reports | Charts, top products, analytics |
-| `/settings` | Settings | Company, theme, billing config |
-| `/profile` | Profile | User info and activity history |
+| Administrator | `admin@stockflow.app` | `password123` |
+
+---
+
+## 📡 API Reference
+
+StockFlow provides a fully documented RESTful API out of the box. Once the backend server is running, you can access the interactive documentation:
+
+- **Swagger UI**: [http://localhost:8000/api/docs](http://localhost:8000/api/docs)
+- **ReDoc**: [http://localhost:8000/api/redoc](http://localhost:8000/api/redoc)
+
+### Core Endpoints Overview
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/auth/login` | Authenticate and obtain JWT |
+| `GET` | `/api/v1/products` | Retrieve paginated products |
+| `POST` | `/api/v1/invoices` | Generate a new invoice |
+| `GET` | `/api/v1/reports/dashboard` | Fetch KPI dashboard metrics |
+
+---
+
+## 🗺️ Project Structure (Pages)
+
+| Route | View | Primary Function |
+|---|---|---|
+| `/dashboard` | **Dashboard** | Overview of KPI metrics, charts, and recent activity |
+| `/products` | **Inventory** | Comprehensive product management and tracking |
+| `/billing` | **Point of Sale** | Real-time invoice generation and checkout |
+| `/invoices` | **Ledger** | Historical records of all transactions |
+| `/reports` | **Analytics** | Deep dive into sales performance and trends |
 
 ---
 
@@ -146,6 +154,5 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ---
 
 <div align="center">
-  <p>Built with ❤️ using React, FastAPI, and PostgreSQL</p>
-  <p>⚡ StockFlow – Smart Inventory & Billing for Modern Wholesalers</p>
+  <p>Engineered with ❤️ for modern businesses.</p>
 </div>
