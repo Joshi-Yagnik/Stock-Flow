@@ -17,6 +17,7 @@ from app.routers import (
     stock_transactions,
     reports,
     settings as settings_router,
+    google,
 )
 
 # Ensure uploads directory exists
@@ -53,6 +54,7 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(products.router, prefix="/api/v1/products", tags=["Products"])
 app.include_router(categories.router, prefix="/api/v1/categories", tags=["Categories"])
 app.include_router(customers.router, prefix="/api/v1/customers", tags=["Customers"])
+app.include_router(google.router, prefix="/api/v1/google", tags=["google"])
 app.include_router(invoices.router, prefix="/api/v1/invoices", tags=["Invoices"])
 app.include_router(stock_transactions.router, prefix="/api/v1/stock", tags=["Stock"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])

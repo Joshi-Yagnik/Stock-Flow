@@ -4,10 +4,12 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-// Auth Pages
 import AuthPage from "@/pages/auth/AuthPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import AuthCallback from "@/pages/auth/AuthCallback";
+import VerifyEmailPage from "@/pages/auth/VerifyEmailPage";
+import ConfirmEmailPage from "@/pages/auth/ConfirmEmailPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 
 // App Pages
 import DashboardPage from "@/pages/dashboard/DashboardPage";
@@ -46,30 +48,31 @@ const ProtectedRoute = ({ children, requireOwner = false }: { children: React.Re
   return <>{children}</>;
 };
 
-function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
 
+const RootRoute = () => {
+  return <Navigate to="/auth" replace />;
+};
+
+function AppRoutes() {
   return (
     <Routes>
+      {/* Root Route */}
+      <Route path="/" element={<RootRoute />} />
+
       {/* Public Routes */}
-      <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/login" element={<Navigate to="/auth" state={{ isRegister: false }} replace />} />
-      <Route path="/register" element={<Navigate to="/auth" state={{ isRegister: true }} replace />} />
-      <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
+      <Route path="/auth/verify-email" element={<PublicRoute><VerifyEmailPage /></PublicRoute>} />
+      <Route path="/auth/confirm" element={<PublicRoute><ConfirmEmailPage /></PublicRoute>} />
+      <Route path="/auth/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><Navigate to="/auth" state={{ isRegister: false }} replace /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Navigate to="/auth" state={{ isRegister: true }} replace /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
 
       {/* Protected App Routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              {/* placeholder - redirected below */}
-              <></>
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/dashboard"
         element={
@@ -180,9 +183,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Redirects */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />

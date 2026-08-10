@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,18 +9,29 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Camera, FileText, Users, TrendingUp } from "lucide-react";
+import { Camera, FileText, Users, TrendingUp, Loader2 } from "lucide-react";
 import { invoices } from "@/data/dummy";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { InvoiceStatusBadge } from "@/components/shared/InvoiceStatusBadge";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfilePage() {
-  const [name, setName] = useState("Mukti Patel");
-  const [email, setEmail] = useState("mukti@stockflow.app");
-  const [phone, setPhone] = useState("+91 98765 43210");
-  const [bio, setBio] = useState("Administrator at StockFlow. Managing wholesale operations since 2024.");
+  const { user, checkAuth } = useAuth();
+  const navigate = useNavigate();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Profile State
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("User");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const activityStats = [
     { label: "Invoices Created", value: "128", icon: FileText, color: "text-primary" },
@@ -27,8 +39,205 @@ export default function ProfilePage() {
     { label: "Total Billed", value: formatCurrency(4_200_000), icon: TrendingUp, color: "text-violet-600" },
   ];
 
+  const fetchProfile = async () => {
+    try {
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      console.log("----- PROFILE FETCH TRACE -----");
+      console.log("Fetching profile for user:", user.id);
+
+      setEmail(user.email || "");
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, mobile_number, shop_name, role, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      console.log("Fetched profile from DB:", profile);
+
+      if (error) throw error;
+
+      // Map values
+      // If DB has no name, try Google auth metadata
+      const authMetadata = (await supabase.auth.getUser()).data.user?.user_metadata;
+      
+      const resolvedName = profile.full_name || authMetadata?.full_name || authMetadata?.name || user.email?.split("@")[0] || "User";
+      setName(resolvedName);
+      
+      setPhone(profile.mobile_number || "");
+      
+      const resolvedRole = profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : "User";
+      setRole(resolvedRole);
+
+      const resolvedAvatar = profile.avatar_url || authMetadata?.avatar_url || authMetadata?.picture || "";
+      console.log("Resolved Avatar URL (DB > Auth Metadata):", resolvedAvatar);
+      setAvatarUrl(resolvedAvatar);
+
+    } catch (error: any) {
+      console.error("Error fetching profile:", error);
+      toast.error("Failed to load profile data.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: name,
+          mobile_number: phone || null,
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      
+      toast.success("Profile updated successfully!");
+      checkAuth(); // Refresh global auth state if needed
+      await fetchProfile();
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast.error(error.message || "Failed to update profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    console.log("----- AVATAR UPLOAD TRACE -----");
+    console.log("AUTH USER:", user);
+    
+    if (!file || !user) {
+      console.log("No file or no user found. Aborting.");
+      return;
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    // Validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Please upload a JPEG, PNG, or WEBP image.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxSize) {
+      toast.error("File is too large. Please upload an image smaller than 5 MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.id}/profile.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+      console.log("GENERATED AVATAR URL:", cacheBustedUrl);
+
+      // 1. Update the database profile
+      console.log("Updating profile table for user:", user.id);
+      const { data: updateData, error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: cacheBustedUrl })
+        .eq("id", user.id)
+        .select();
+
+      console.log("PROFILE UPDATE RESULT:", updateData);
+      console.log("PROFILE UPDATE ERROR:", updateError);
+
+      if (updateError) throw updateError;
+      if (!updateData || updateData.length === 0) {
+        throw new Error("Database update failed silently (0 rows affected). You are missing an UPDATE policy for the 'profiles' table in Supabase RLS.");
+      }
+
+      // 2. Update the Auth metadata so the Navbar (AuthContext) updates immediately
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { avatar_url: cacheBustedUrl }
+      });
+      
+      if (authError) {
+        console.error("Auth metadata update failed:", authError);
+        throw new Error("Failed to update user auth metadata.");
+      }
+
+      // 3. Update local state explicitly AFTER database and auth updates succeed
+      console.log("Setting local React state avatarUrl to:", cacheBustedUrl);
+      setAvatarUrl(cacheBustedUrl);
+      
+      // Fetch profile again to verify database persistence
+      const { data: refreshedProfile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .single();
+      console.log("PROFILE AFTER UPDATE (refetched):", refreshedProfile);
+
+      toast.success("Profile picture updated successfully");
+    } catch (error: any) {
+      console.error("Error uploading avatar:", error);
+      
+      const errorMessage = error.message?.toLowerCase() || "";
+      if (errorMessage.includes("bucket not found")) {
+        toast.error("Avatar storage is not configured. Please create the 'avatars' storage bucket in Supabase.");
+      } else {
+        toast.error(error.message || "Failed to upload avatar.");
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const getInitials = (fullName: string) => {
+    if (!fullName) return "U";
+    return fullName
+      .split(" ")
+      .map(n => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
+      
+
       <PageHeader
         title="My Profile"
         description="Manage your personal information and activity"
@@ -41,20 +250,29 @@ export default function ProfilePage() {
           <CardContent className="p-6 flex flex-col items-center text-center">
             <div className="relative mb-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src="" alt={name} />
-                <AvatarFallback className="text-2xl font-bold">MP</AvatarFallback>
+                <AvatarImage src={avatarUrl || ""} alt={name} key={avatarUrl} />
+                <AvatarFallback className="text-2xl font-bold">{getInitials(name)}</AvatarFallback>
               </Avatar>
-              <button className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-colors">
-                <Camera className="h-3.5 w-3.5" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                disabled={isUploading}
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
               </button>
             </div>
             <h2 className="text-xl font-bold text-foreground">{name}</h2>
             <p className="text-sm text-muted-foreground mt-0.5">{email}</p>
-            <Badge variant="info" className="mt-2">Administrator</Badge>
-            <Separator className="my-4 w-full" />
-            <p className="text-sm text-muted-foreground text-left w-full leading-relaxed">
-              {bio}
-            </p>
+            <Badge variant="info" className="mt-2">{role}</Badge>
+            
             <Separator className="my-4 w-full" />
             <div className="w-full space-y-3">
               {activityStats.map((stat) => {
@@ -96,6 +314,7 @@ export default function ProfilePage() {
                         id="profile-name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        placeholder="Your full name"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -104,7 +323,8 @@ export default function ProfilePage() {
                         id="profile-email"
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        readOnly
+                        className="opacity-60 cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -113,26 +333,24 @@ export default function ProfilePage() {
                         id="profile-phone"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Not provided"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="profile-role">Role</Label>
-                      <Input id="profile-role" value="Administrator" readOnly className="opacity-60 cursor-not-allowed" />
+                      <Input id="profile-role" value={role} readOnly className="opacity-60 cursor-not-allowed" />
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="profile-bio">Bio</Label>
-                    <Textarea
-                      id="profile-bio"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
+                  
                   <Separator />
                   <div className="flex justify-end">
-                    <Button onClick={() => toast.success("Profile updated successfully!")}>
-                      Save Changes
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={isSaving}
+                      className="min-w-[120px]"
+                    >
+                      {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 </CardContent>

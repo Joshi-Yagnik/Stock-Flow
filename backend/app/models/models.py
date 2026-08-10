@@ -59,6 +59,25 @@ class User(Base):
     invoices: Mapped[List["Invoice"]] = relationship(back_populates="created_by_user")
     categories: Mapped[List["Category"]] = relationship(back_populates="owner")
     products: Mapped[List["Product"]] = relationship(back_populates="owner")
+    customers: Mapped[List["Customer"]] = relationship(back_populates="owner")
+    google_connection: Mapped[Optional["GoogleConnection"]] = relationship(back_populates="user")
+
+
+# ─── Google Connection ────────────────────────────────────────────────────────
+class GoogleConnection(Base):
+    __tablename__ = "google_connections"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), unique=True, nullable=False)
+    access_token: Mapped[str] = mapped_column(Text, nullable=False)
+    refresh_token: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="google_connection")
+
 
 
 # ─── Mobile Verification ───────────────────────────────────────────────────────
@@ -138,8 +157,9 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=gen_uuid)
+    owner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
-    mobile_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True, index=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     company: Mapped[Optional[str]] = mapped_column(String(200))
     address: Mapped[Optional[str]] = mapped_column(Text)
@@ -153,6 +173,7 @@ class Customer(Base):
     )
 
     # Relationships
+    owner: Mapped["User"] = relationship(back_populates="customers")
     invoices: Mapped[List["Invoice"]] = relationship(back_populates="customer")
 
 

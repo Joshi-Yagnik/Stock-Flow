@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Sun, Moon } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -29,11 +30,30 @@ export default function ForgotPasswordPage() {
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async (_data: ForgotPasswordForm) => {
-    // UI Only as requested
-    await new Promise((r) => setTimeout(r, 1200));
-    toast.success("Password reset instructions sent!");
-    setIsSubmitted(true);
+  const onSubmit = async (data: ForgotPasswordForm) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        console.error("Supabase resetPasswordForEmail Error:", error);
+        
+        // Handle rate limit specifically
+        if (error.status === 429 || error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("security purposes")) {
+          toast.error("You've requested too many password resets. Please wait a minute before trying again.");
+        } else {
+          toast.error(error.message || "Failed to send reset email. Please try again.");
+        }
+        return;
+      }
+
+      setIsSubmitted(true);
+      toast.success("Password reset link sent. Please check your email.");
+    } catch (err: any) {
+      console.error("Unexpected error during password reset:", err);
+      toast.error(err.message || "An unexpected error occurred.");
+    }
   };
 
   return (
@@ -65,7 +85,7 @@ export default function ForgotPasswordPage() {
           <div className="space-y-4">
             <div className="rounded-lg bg-green-500/10 p-4 border border-green-500/20">
               <p className="text-sm text-green-600 dark:text-green-400 font-medium text-center">
-                Check your email for a reset link!
+                Check your email (and spam folder) for a reset link!
               </p>
             </div>
             <Button
@@ -102,6 +122,7 @@ export default function ForgotPasswordPage() {
               className="w-full"
               size="lg"
               loading={isSubmitting}
+              disabled={isSubmitting}
             >
               {isSubmitting ? "Sending..." : "Send Reset Link"}
             </Button>

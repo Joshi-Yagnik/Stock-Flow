@@ -71,6 +71,19 @@ class UserResponse(UserBase):
     model_config = {"from_attributes": True}
 
 
+# ─── Google Integration ────────────────────────────────────────────────────────
+class GoogleConnectRequest(BaseModel):
+    code: str
+
+class GoogleContactResponse(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    photo: Optional[str] = None
+
+class GoogleContactsListResponse(BaseModel):
+    contacts: List[GoogleContactResponse]
+
 # ─── Category ────────────────────────────────────────────────────────────────
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -153,7 +166,7 @@ class ProductListResponse(PaginatedResponse):
 # ─── Customer ────────────────────────────────────────────────────────────────
 class CustomerBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=150)
-    email: EmailStr
+    email: Optional[EmailStr] = None
     phone: str = Field(..., min_length=7, max_length=20)
     company: Optional[str] = None
     address: Optional[str] = None

@@ -50,12 +50,12 @@ export interface Product {
 export interface Customer {
   id: string;
   name: string;
-  mobileNumber: string;
+  mobileNumber?: string;
   phone: string;
   company?: string;
-  address: string;
-  city: string;
-  state: string;
+  address?: string;
+  city?: string;
+  state?: string;
   gstNumber?: string;
   totalOrders: number;
   totalSpent: number;

@@ -82,17 +82,40 @@ npm run dev
 ```bash
 cd backend
 
+<<<<<<< HEAD
 # Create and activate virtual environment
 python -m venv .venv
 # Windows: .venv\Scripts\activate 
 # macOS/Linux: source .venv/bin/activate
+=======
+# Create virtual environment
+python -m venv venv
+
+# Activate on Windows
+venv\Scripts\activate
+# Activate on macOS/Linux
+# source venv/bin/activate
+>>>>>>> bd1a262 (Google Contacts Imported)
 
 # Install dependencies
 pip install -r requirements.txt
 
+<<<<<<< HEAD
 # Configure environment variables
 cp .env.example .env
 # Edit .env with your database credentials
+=======
+# Configure environment
+copy .env.example .env
+# Edit .env with your PostgreSQL credentials
+
+# Run database migrations
+alembic upgrade head
+
+# Start backend
+uvicorn main:app --reload
+# → http://localhost:8000/api/docs
+>>>>>>> bd1a262 (Google Contacts Imported)
 ```
 
 ### 2. Database Configuration

@@ -75,12 +75,22 @@ export default function AuthPage() {
 
   const onLoginSubmit = async (data: LoginForm) => {
     try {
+      if (data.rememberMe) {
+        window.localStorage.setItem('remember_me', 'true');
+      } else {
+        window.localStorage.removeItem('remember_me');
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
       if (error) {
+        if (error.message.toLowerCase().includes("email not confirmed")) {
+          toast.error("Please verify your email before signing in. Check your inbox for the verification email.");
+          return;
+        }
         toast.error(error.message);
         return;
       }
@@ -98,6 +108,7 @@ export default function AuthPage() {
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: data.fullName
           }
@@ -113,8 +124,7 @@ export default function AuthPage() {
         toast.success("Account created successfully! 🎉");
         navigate("/dashboard");
       } else {
-        toast.success("Account created! Please check your email to verify your account.");
-        setIsFlipped(false);
+        navigate("/auth/verify-email", { state: { email: data.email } });
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");

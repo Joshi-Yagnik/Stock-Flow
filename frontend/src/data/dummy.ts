@@ -66,14 +66,7 @@ export const products: Product[] = [
 ];
 
 // ─── Customers ────────────────────────────────────────────────────────────────
-export const customers: Customer[] = [
-  { id: "cust-1", name: "Rajesh Sharma", mobileNumber: "rajesh.sharma@gmail.com", phone: "+91 98765 43210", company: "Sharma Enterprises", address: "45 MG Road", city: "Bengaluru", state: "Karnataka", gstNumber: "29AADCS1234F1Z5", totalOrders: 48, totalSpent: 8_24_500, isActive: true, createdAt: "2024-01-10" },
-  { id: "cust-2", name: "Priya Patel", mobileNumber: "priya.patel@patelinc.com", phone: "+91 97654 32109", company: "Patel Inc.", address: "12 Ashram Road", city: "Ahmedabad", state: "Gujarat", gstNumber: "24AAKCP5678G1ZM", totalOrders: 36, totalSpent: 5_60_200, isActive: true, createdAt: "2024-01-20" },
-  { id: "cust-3", name: "Mohan Gupta", mobileNumber: "mohan@guptabros.co.in", phone: "+91 96543 21098", company: "Gupta Brothers", address: "8 Connaught Place", city: "New Delhi", state: "Delhi", gstNumber: "07AAECG8901H1ZQ", totalOrders: 62, totalSpent: 12_10_000, isActive: true, createdAt: "2024-02-01" },
-  { id: "cust-4", name: "Anita Krishnamurthy", mobileNumber: "anita.k@techtraders.com", phone: "+91 95432 10987", company: "Tech Traders", address: "22 Anna Salai", city: "Chennai", state: "Tamil Nadu", totalOrders: 24, totalSpent: 3_45_800, isActive: true, createdAt: "2024-02-15" },
-  { id: "cust-5", name: "Suresh Mehta", mobileNumber: "suresh.mehta@retail.com", phone: "+91 94321 09876", address: "16 Park Street", city: "Kolkata", state: "West Bengal", totalOrders: 18, totalSpent: 2_18_500, isActive: false, createdAt: "2024-03-01" },
-  { id: "cust-6", name: "Kavita Reddy", mobileNumber: "kavita.r@shopmore.in", phone: "+91 93210 98765", company: "ShopMore Retail", address: "5 Hitech City", city: "Hyderabad", state: "Telangana", gstNumber: "36AAFCR2345I1ZP", totalOrders: 42, totalSpent: 7_80_000, isActive: true, createdAt: "2024-03-10" },
-];
+export const customers: Customer[] = [];
 
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 export const invoices: Invoice[] = [
