@@ -70,31 +70,31 @@ export default function DashboardPage() {
         <StatsCard
           title="Total Categories"
           value={formatNumber(dashboardStats.totalCategories)}
-          icon={<Tag className="h-5 w-5 text-indigo-600" />}
-          iconBg="bg-indigo-100 dark:bg-indigo-900/30"
+          icon={<Tag className="h-5 w-5 text-blue-500" />}
+          iconBg="bg-blue-500/10"
           description="Active categories"
         />
         <StatsCard
           title="Total stockQuantity"
           value={formatNumber(dashboardStats.totalStock)}
-          icon={<Boxes className="h-5 w-5 text-violet-600" />}
-          iconBg="bg-violet-100 dark:bg-violet-900/30"
+          icon={<Boxes className="h-5 w-5 text-purple-500" />}
+          iconBg="bg-purple-500/10"
           change={-1.8}
           changeLabel="vs last month"
         />
         <StatsCard
           title="Today's Sales"
           value={formatCurrency(dashboardStats.todaySales)}
-          icon={<IndianRupee className="h-5 w-5 text-emerald-600" />}
-          iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+          icon={<IndianRupee className="h-5 w-5 text-emerald-500" />}
+          iconBg="bg-emerald-500/10"
           change={12.5}
           changeLabel="vs yesterday"
         />
         <StatsCard
           title="Monthly Revenue"
           value={formatCurrency(dashboardStats.monthlyRevenue)}
-          icon={<TrendingUp className="h-5 w-5 text-amber-600" />}
-          iconBg="bg-amber-100 dark:bg-amber-900/30"
+          icon={<TrendingUp className="h-5 w-5 text-amber-500" />}
+          iconBg="bg-amber-500/10"
           change={19.4}
           changeLabel="vs last month"
         />
@@ -112,23 +112,23 @@ export default function DashboardPage() {
         <StatsCard
           title="Total Customers"
           value={formatNumber(dashboardStats.totalCustomers)}
-          icon={<Users className="h-5 w-5 text-blue-600" />}
-          iconBg="bg-blue-100 dark:bg-blue-900/30"
+          icon={<Users className="h-5 w-5 text-blue-500" />}
+          iconBg="bg-blue-500/10"
           change={8.3}
           changeLabel="vs last month"
         />
         <StatsCard
           title="Pending Invoices"
           value={dashboardStats.pendingInvoices}
-          icon={<FileText className="h-5 w-5 text-orange-600" />}
-          iconBg="bg-orange-100 dark:bg-orange-900/30"
+          icon={<FileText className="h-5 w-5 text-primary" />}
+          iconBg="bg-primary/10"
           description="Awaiting payment"
         />
         <StatsCard
           title="Monthly Orders"
           value={formatNumber(dashboardStats.monthlyOrders)}
-          icon={<ShoppingCart className="h-5 w-5 text-teal-600" />}
-          iconBg="bg-teal-100 dark:bg-teal-900/30"
+          icon={<ShoppingCart className="h-5 w-5 text-emerald-500" />}
+          iconBg="bg-emerald-500/10"
           change={10.6}
           changeLabel="vs last month"
         />
@@ -147,20 +147,20 @@ export default function DashboardPage() {
               <AreaChart data={salesData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(221,83%,53%)" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="hsl(221,83%,53%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                   className="text-muted-foreground"
                   axisLine={false}
                   tickLine={false}
@@ -170,10 +170,11 @@ export default function DashboardPage() {
                   contentStyle={{
                     background: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
+                    borderRadius: "8px",
                     fontSize: "13px",
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
                   }}
+                  itemStyle={{ color: "hsl(var(--foreground))" }}
                   formatter={(value: number) => [
                     formatCurrency(value),
                     "Revenue",
@@ -182,11 +183,11 @@ export default function DashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="hsl(221,83%,53%)"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={2.5}
                   fill="url(#revenueGradient)"
                   dot={false}
-                  activeDot={{ r: 5, strokeWidth: 0 }}
+                  activeDot={{ r: 5, strokeWidth: 0, fill: "hsl(var(--primary))" }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -210,18 +211,28 @@ export default function DashboardPage() {
                   outerRadius={95}
                   paddingAngle={3}
                   dataKey="value"
+                  stroke="none"
                 >
-                  {categoryDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
-                  ))}
+                  {categoryDistribution.map((entry, index) => {
+                    const colors = [
+                      "hsl(var(--primary))",
+                      "hsl(271, 71%, 59%)",
+                      "hsl(150, 66%, 40%)",
+                      "hsl(39, 77%, 52%)",
+                      "hsl(var(--muted-foreground))"
+                    ];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                  })}
                 </Pie>
                 <Tooltip
                   contentStyle={{
                     background: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
+                    borderRadius: "8px",
                     fontSize: "13px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
                   }}
+                  itemStyle={{ color: "hsl(var(--foreground))" }}
                   formatter={(value: number) => [`${value}%`, ""]}
                 />
                 <Legend

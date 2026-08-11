@@ -51,8 +51,8 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border min-h-[var(--navbar-height)]">
-        <div className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-xl gradient-blue shadow-md">
-          <Zap className="h-5 w-5 text-white" />
+        <div className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-md">
+          <Zap className="h-5 w-5 text-primary-foreground" />
         </div>
         {!collapsed && (
           <div className="flex flex-col overflow-hidden">
@@ -90,14 +90,14 @@ export function Sidebar() {
 
       {/* Low Stock Alert */}
       {!collapsed && (
-        <div className="mx-3 mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+        <div className="mx-3 mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30">
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-            <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+            <AlertTriangle className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-primary">
               Low Stock Alert
             </span>
           </div>
-          <p className="text-xs text-amber-600 dark:text-amber-400">
+          <p className="text-xs text-muted-foreground">
             23 products are running low on stock.
           </p>
         </div>
@@ -136,8 +136,8 @@ function NavItem({
         cn(
           "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
           isActive
-            ? "bg-primary/10 text-primary dark:bg-primary/20"
-            : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            ? "bg-primary/20 text-primary"
+            : "text-muted-foreground hover:bg-accent/10 hover:text-foreground",
           collapsed && "justify-center px-2"
         )
       }

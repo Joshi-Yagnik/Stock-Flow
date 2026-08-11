@@ -36,7 +36,7 @@ export function Navbar() {
     <header className="sticky top-0 z-30 flex h-[var(--navbar-height)] items-center justify-between border-b border-border bg-background/95 backdrop-blur-md px-6">
       {/* Left: Search */}
       <div className="flex items-center gap-4 flex-1 max-w-md">
-        <button className="flex items-center gap-2 h-9 w-full max-w-xs rounded-lg border border-input bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors">
+        <button className="flex items-center gap-2 h-9 w-full max-w-xs rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground hover:border-primary/50 transition-colors">
           <Search className="h-4 w-4 flex-shrink-0" />
           <span className="truncate">Search products, invoices…</span>
           <kbd className="ml-auto hidden sm:flex items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
@@ -61,6 +61,7 @@ export function Navbar() {
           onClick={toggleTheme}
           id="navbar-theme-toggle"
           aria-label="Toggle theme"
+          className="text-muted-foreground hover:text-foreground"
         >
           {resolvedTheme === "dark" ? (
             <Sun className="h-4.5 w-4.5" />
@@ -74,7 +75,7 @@ export function Navbar() {
           <DropdownMenuTrigger asChild>
             <button
               id="navbar-user-menu"
-              className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-accent transition-colors"
+              className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-accent/10 transition-colors"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.avatar_url || ""} alt={user?.name || "User"} />
