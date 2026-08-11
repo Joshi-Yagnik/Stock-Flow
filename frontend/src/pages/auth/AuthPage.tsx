@@ -147,34 +147,48 @@ export default function AuthPage() {
     }
   };
 
-  const inputClassName = "h-10 md:h-11 rounded-[12px] bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] placeholder:text-[rgba(255,255,255,0.45)] text-white text-[14px] focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus-visible:ring-offset-0 transition-all";
-  const labelClassName = "text-white/80 font-medium mb-1 block text-[12px] md:text-[13px]";
-  const cardClassName = "backface-hidden w-full flex flex-col justify-center p-5 md:p-7 lg:p-8 rounded-[24px] border border-[rgba(255,255,255,0.08)] bg-[rgba(20,24,40,0.45)] backdrop-blur-[24px] shadow-[0_20px_80px_rgba(0,0,0,0.45),0_0_40px_rgba(59,130,246,0.15)] transition-all max-h-[85vh]";
+  const inputClassName = "h-11 md:h-12 rounded-[8px] bg-input border border-border placeholder:text-muted-foreground text-foreground text-[14px] focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring focus-visible:ring-offset-0 transition-all";
+  const labelClassName = "text-foreground font-semibold mb-2 block text-[13px] md:text-[14px]";
+  const cardClassName = "backface-hidden w-full flex flex-col justify-center p-6 md:p-8 rounded-[16px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border transition-all max-h-[85vh]";
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden flex items-center justify-center bg-gradient-to-br from-[#0a0f1c] via-[#020617] to-black relative overflow-x-hidden">
+    <div className="min-h-screen md:h-screen md:overflow-hidden flex items-center justify-center bg-background font-sans relative overflow-x-hidden overflow-y-auto">
       
-      {/* Decorative Background Glows */}
-      <div className="absolute top-1/4 -left-32 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/3 -right-32 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-pink-600/10 rounded-full blur-[120px] pointer-events-none" />
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all border border-transparent"
+        >
+          {resolvedTheme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+      </div>
 
-      {/* Theme Toggle */}
-      <button
-        onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-        className="absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/10 transition-colors z-20 text-white"
-        aria-label="Toggle theme"
-      >
-        {resolvedTheme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-      </button>
+      {/* Decorative Background Waves (SVG) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Left Waves */}
+        <svg className="absolute left-0 bottom-0 w-full md:w-[50vw] h-[60vh] text-primary dark:text-primary" preserveAspectRatio="none" viewBox="0 0 500 500">
+          <path d="M0,200 C150,250 250,400 500,500 L0,500 Z" fill="currentColor" className="opacity-[0.1] dark:opacity-[0.04]" />
+          <path d="M0,300 C100,320 200,450 400,500 L0,500 Z" fill="currentColor" className="opacity-[0.05] dark:opacity-[0.06]" />
+        </svg>
+        {/* Right Waves */}
+        <svg className="absolute right-0 bottom-0 w-full md:w-[50vw] h-[70vh] text-primary dark:text-primary" preserveAspectRatio="none" viewBox="0 0 500 500">
+          <path d="M500,100 C350,200 200,350 0,500 L500,500 Z" fill="currentColor" className="opacity-[0.08] dark:opacity-[0.04]" />
+          <path d="M500,250 C400,300 250,420 50,500 L500,500 Z" fill="currentColor" className="opacity-[0.06] dark:opacity-[0.06]" />
+        </svg>
+      </div>
 
       {/* Centered Content Wrapper */}
-      <div className="relative w-[95%] md:w-[90%] max-w-[480px] z-10 flex flex-col items-center justify-center mx-auto">
+      <div className="relative w-[90%] max-w-[390px] z-10 flex flex-col items-center justify-center mx-auto mt-4 mb-8">
         
         {/* Fixed Branding */}
-        <div className="flex items-center space-x-2.5 mb-6 md:mb-8 pointer-events-none">
-          <Zap className="h-6 w-6 md:h-7 md:w-7 text-blue-500 fill-blue-500/20" />
-          <span className="text-2xl md:text-[28px] font-bold text-white tracking-tight">StockFlow</span>
+        <div className="flex flex-col items-center mb-4 pointer-events-none">
+          <div className="flex items-center space-x-2.5">
+            <Zap className="h-7 w-7 text-primary fill-primary" />
+            <span className="text-[26px] font-bold text-foreground tracking-tight">StockFlow</span>
+          </div>
         </div>
 
         {/* Flip Container */}
@@ -188,14 +202,14 @@ export default function AuthPage() {
               className={cardClassName}
               style={{ gridArea: "1 / 1 / 2 / 2" }}
             >
-              <div className="mb-5 md:mb-6 text-center">
-                <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">Sign in</h1>
-                <p className="text-[13px] md:text-[14px] text-[rgba(255,255,255,0.60)] mt-1">
+              <div className="mb-7 text-center">
+                <h1 className="text-[28px] font-bold text-foreground leading-tight mb-2">Sign in</h1>
+                <p className="text-[14px] text-muted-foreground">
                   Welcome back! Enter your credentials.
                 </p>
               </div>
 
-              <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-3 md:space-y-4" noValidate>
+              <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-4" noValidate>
                 <div>
                   <Label htmlFor="login-email" className={labelClassName}>Email</Label>
                   <Input
@@ -207,16 +221,16 @@ export default function AuthPage() {
                     className={`${inputClassName} ${loginErrors.email ? "border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500" : ""}`}
                   />
                   {loginErrors.email && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-1">{loginErrors.email.message}</p>
+                     <p className="text-[11px] md:text-xs text-red-500 mt-1">{loginErrors.email.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <Label htmlFor="login-password" className="text-white/80 font-medium text-[12px] md:text-[13px]">Password</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="login-password" className="text-foreground font-semibold text-[13px] md:text-[14px] mb-0">Password</Label>
                     <Link
                       to="/forgot-password"
-                      className="text-[12px] md:text-[13px] text-blue-400 hover:text-blue-300 transition-colors"
+                      className="text-[12px] text-primary hover:text-primary/80 transition-colors font-medium"
                     >
                       Forgot password?
                     </Link>
@@ -233,25 +247,28 @@ export default function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       aria-label={showLoginPassword ? "Hide password" : "Show password"}
                     >
                       {showLoginPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                     </button>
                   </div>
+                  {!loginErrors.password && (
+                    <p className="text-[11px] text-muted-foreground mt-1.5">Password must be at least 6 characters</p>
+                  )}
                   {loginErrors.password && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-1">{loginErrors.password.message}</p>
+                    <p className="text-[11px] md:text-xs text-red-500 mt-1.5">{loginErrors.password.message}</p>
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2 pt-1">
+                <div className="flex items-center space-x-2.5 pt-1">
                   <input 
                     type="checkbox" 
                     id="rememberMe"
-                    className="h-4 w-4 rounded border-[rgba(255,255,255,0.2)] bg-white/5 text-blue-500 focus:ring-blue-500 focus:ring-offset-0 transition-colors cursor-pointer"
+                    className="h-4 w-4 rounded-[4px] border-border bg-card text-primary focus:ring-ring focus:ring-offset-0 transition-colors cursor-pointer"
                     {...registerLogin("rememberMe")}
                   />
-                  <Label htmlFor="rememberMe" className="text-[13px] md:text-[14px] text-[rgba(255,255,255,0.8)] cursor-pointer select-none">
+                  <Label htmlFor="rememberMe" className="text-[13px] md:text-[14px] text-foreground cursor-pointer select-none font-medium">
                     Remember me
                   </Label>
                 </div>
@@ -259,7 +276,8 @@ export default function AuthPage() {
                 <Button
                   id="login-submit"
                   type="submit"
-                  className="w-full h-10 md:h-11 mt-3 rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white text-[15px] font-medium border-0 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
+                  className="w-full h-11 md:h-12 mt-2 rounded-[8px] text-primary-foreground text-[15px] font-semibold border-0 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:scale-100 shadow-sm"
+                  style={{ background: resolvedTheme === 'dark' ? 'linear-gradient(90deg, #A85B1F, #C87527)' : 'linear-gradient(90deg, #A85B1F, #C27832)' }}
                   loading={isLoginSubmitting}
                   disabled={!isLoginValid || isLoginSubmitting}
                 >
@@ -267,12 +285,12 @@ export default function AuthPage() {
                 </Button>
               </form>
 
-              <div className="relative my-4">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[rgba(255,255,255,0.1)]"></div>
+                  <div className="w-full border-t border-border"></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-[rgba(20,24,40,0.45)] px-2 text-[rgba(255,255,255,0.5)]">
+                  <span className="bg-card px-3 text-muted-foreground tracking-wider text-[10px] md:text-[11px] font-medium">
                     OR CONTINUE WITH
                   </span>
                 </div>
@@ -281,10 +299,10 @@ export default function AuthPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 md:h-11 rounded-[12px] bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-white hover:bg-[rgba(255,255,255,0.08)] transition-all font-medium flex items-center justify-center space-x-2 border"
+                className="w-full h-11 md:h-12 rounded-[8px] bg-card border border-border text-foreground hover:bg-muted/50 transition-all font-semibold flex items-center justify-center space-x-2.5 shadow-sm"
                 onClick={handleGoogleSignup}
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -293,12 +311,12 @@ export default function AuthPage() {
                 <span>Sign in with Google</span>
               </Button>
 
-              <p className="mt-5 md:mt-6 text-center text-[13px] md:text-[14px] text-[rgba(255,255,255,0.6)]">
+              <p className="mt-7 text-center text-[13px] md:text-[14px] text-muted-foreground">
                 Don't have an account?{" "}
                 <button
                   type="button"
                   onClick={() => setIsFlipped(true)}
-                  className="font-medium text-white hover:text-blue-300 transition-colors"
+                  className="font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
                 >
                   Create Account
                 </button>
@@ -310,16 +328,16 @@ export default function AuthPage() {
               className={`${cardClassName} rotate-y-180 transition-all overflow-hidden`}
               style={{ gridArea: "1 / 1 / 2 / 2" }}
             >
-              <div className="mb-4 md:mb-5 text-center">
-                <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">Create account</h1>
-                <p className="text-[13px] md:text-[14px] text-[rgba(255,255,255,0.60)] mt-1">
+              <div className="mb-6 text-center">
+                <h1 className="text-[28px] font-bold text-foreground leading-tight mb-2">Create account</h1>
+                <p className="text-[14px] text-muted-foreground">
                   Streamline your wholesale business.
                 </p>
               </div>
 
-              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-2 md:space-y-3" noValidate>
+              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4" noValidate>
                 <div>
-                  <Label htmlFor="reg-name" className={labelClassName}>Full Name *</Label>
+                  <Label htmlFor="reg-name" className={labelClassName}>Full Name</Label>
                   <Input
                     id="reg-name"
                     placeholder="Enter your full name"
@@ -327,12 +345,12 @@ export default function AuthPage() {
                     className={`${inputClassName} ${registerErrors.fullName ? "border-red-500" : ""}`}
                   />
                   {registerErrors.fullName && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.fullName.message}</p>
+                    <p className="text-[11px] md:text-xs text-red-500 mt-1">{registerErrors.fullName.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-email" className={labelClassName}>Email *</Label>
+                  <Label htmlFor="reg-email" className={labelClassName}>Email</Label>
                   <Input
                     id="reg-email"
                     type="email"
@@ -341,12 +359,12 @@ export default function AuthPage() {
                     className={`${inputClassName} ${registerErrors.email ? "border-red-500" : ""}`}
                   />
                   {registerErrors.email && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.email.message}</p>
+                    <p className="text-[11px] md:text-xs text-red-500 mt-1">{registerErrors.email.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-password" className={labelClassName}>Password *</Label>
+                  <Label htmlFor="reg-password" className={labelClassName}>Password</Label>
                   <div className="relative">
                     <Input
                       id="reg-password"
@@ -359,18 +377,18 @@ export default function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {showRegisterPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                     </button>
                   </div>
                   {registerErrors.password && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.password.message}</p>
+                    <p className="text-[11px] md:text-xs text-red-500 mt-1">{registerErrors.password.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-confirm" className={labelClassName}>Confirm Password *</Label>
+                  <Label htmlFor="reg-confirm" className={labelClassName}>Confirm Password</Label>
                   <Input
                     id="reg-confirm"
                     type="password"
@@ -380,14 +398,15 @@ export default function AuthPage() {
                     className={`${inputClassName} ${registerErrors.confirmPassword ? "border-red-500" : ""}`}
                   />
                   {registerErrors.confirmPassword && (
-                    <p className="text-[11px] md:text-xs text-red-400 mt-0.5">{registerErrors.confirmPassword.message}</p>
+                    <p className="text-[11px] md:text-xs text-red-500 mt-1">{registerErrors.confirmPassword.message}</p>
                   )}
                 </div>
 
                 <Button
                   id="register-submit"
                   type="submit"
-                  className="w-full h-10 md:h-11 mt-4 rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white text-[15px] font-medium border-0 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
+                  className="w-full h-11 md:h-12 mt-3 rounded-[8px] text-primary-foreground text-[15px] font-semibold border-0 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:scale-100 shadow-sm"
+                  style={{ background: resolvedTheme === 'dark' ? 'linear-gradient(90deg, #A85B1F, #C87527)' : 'linear-gradient(90deg, #A85B1F, #C27832)' }}
                   loading={isRegisterSubmitting}
                   disabled={!isRegisterValid || isRegisterSubmitting}
                 >
@@ -395,12 +414,12 @@ export default function AuthPage() {
                 </Button>
               </form>
 
-              <div className="relative my-4">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[rgba(255,255,255,0.1)]"></div>
+                  <div className="w-full border-t border-border"></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-[rgba(20,24,40,0.45)] px-2 text-[rgba(255,255,255,0.5)]">
+                  <span className="bg-card px-3 text-muted-foreground tracking-wider text-[10px] md:text-[11px] font-medium">
                     OR CONTINUE WITH
                   </span>
                 </div>
@@ -409,10 +428,10 @@ export default function AuthPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 md:h-11 rounded-[12px] bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-white hover:bg-[rgba(255,255,255,0.08)] transition-all font-medium flex items-center justify-center space-x-2 border"
+                className="w-full h-11 md:h-12 rounded-[8px] bg-card border border-border text-foreground hover:bg-muted/50 transition-all font-semibold flex items-center justify-center space-x-2.5 shadow-sm"
                 onClick={handleGoogleSignup}
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -421,12 +440,12 @@ export default function AuthPage() {
                 <span>Sign up with Google</span>
               </Button>
 
-              <p className="mt-4 md:mt-5 text-center text-[13px] md:text-[14px] text-[rgba(255,255,255,0.6)]">
+              <p className="mt-7 text-center text-[13px] md:text-[14px] text-muted-foreground">
                 Already have an account?{" "}
                 <button 
                   type="button"
                   onClick={() => setIsFlipped(false)}
-                  className="font-medium text-white hover:text-blue-300 transition-colors"
+                  className="font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
                 >
                   Sign In
                 </button>
