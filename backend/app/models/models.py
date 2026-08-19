@@ -166,6 +166,7 @@ class Customer(Base):
     city: Mapped[Optional[str]] = mapped_column(String(100))
     state: Mapped[Optional[str]] = mapped_column(String(100))
     gst_number: Mapped[Optional[str]] = mapped_column(String(20))
+    show_in_main_list: Mapped[Optional[bool]] = mapped_column(Boolean, default=False, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(

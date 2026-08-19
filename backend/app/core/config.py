@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://stockflow_user:stockflow_pass@localhost:5432/stockflow_db"
+    DATABASE_URL: str = ""
 
     # JWT
     SECRET_KEY: str = "change-this-secret-key-in-production"

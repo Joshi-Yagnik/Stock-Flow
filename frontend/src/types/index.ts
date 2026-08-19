@@ -59,6 +59,7 @@ export interface Customer {
   gstNumber?: string;
   totalOrders: number;
   totalSpent: number;
+  showInMainList?: boolean;
   isActive: boolean;
   createdAt: string;
 }

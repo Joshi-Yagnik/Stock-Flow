@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { toast } from 'sonner';
 
@@ -9,6 +9,9 @@ export interface GoogleContact {
   photo?: string;
 }
 
+const STORAGE_KEY_TOKEN = "stockflow_google_access_token";
+const STORAGE_KEY_TIME = "stockflow_google_token_time";
+
 export const useGoogleContacts = () => {
   const [contacts, setContacts] = useState<GoogleContact[]>([]);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -16,7 +19,7 @@ export const useGoogleContacts = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
 
-  const fetchContactsWithToken = async (accessToken: string) => {
+  const fetchContactsWithToken = async (accessToken: string, showToast = true) => {
     setIsLoadingContacts(true);
     try {
       const response = await fetch(
@@ -29,15 +32,10 @@ export const useGoogleContacts = () => {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Google People API error:", {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
-        
         if (response.status === 401) {
-           setIsExpired(true);
+          setIsExpired(true);
+          localStorage.removeItem(STORAGE_KEY_TOKEN);
+          localStorage.removeItem(STORAGE_KEY_TIME);
         }
         throw new Error("Failed to fetch Google Contacts");
       }
@@ -50,14 +48,23 @@ export const useGoogleContacts = () => {
         email: person.emailAddresses?.[0]?.value || "",
         phone: person.phoneNumbers?.[0]?.value || "",
         photo: person.photos?.[0]?.url || "",
-      })).filter((c: GoogleContact) => c.name); // only keep if it has a name
+      })).filter((c: GoogleContact) => c.name);
 
       setContacts(parsedContacts);
       setIsConnected(true);
       setIsExpired(false);
-      toast.success("Google Contacts loaded!");
+
+      // Save token locally
+      localStorage.setItem(STORAGE_KEY_TOKEN, accessToken);
+      localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
+
+      if (showToast) {
+        toast.success("Google Contacts loaded!");
+      }
     } catch (err) {
-      toast.error("Failed to fetch Google Contacts.");
+      if (showToast) {
+        toast.error("Failed to fetch Google Contacts.");
+      }
       setIsConnected(false);
     } finally {
       setIsLoadingContacts(false);
@@ -65,15 +72,39 @@ export const useGoogleContacts = () => {
     }
   };
 
+  // Check connection status on load WITHOUT calling Google API synchronously on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+    const savedTime = localStorage.getItem(STORAGE_KEY_TIME);
+
+    if (savedToken && savedTime) {
+      const elapsed = Date.now() - parseInt(savedTime, 10);
+      if (elapsed < 3500000) {
+        setIsConnected(true);
+        setIsExpired(false);
+      } else {
+        setIsExpired(true);
+      }
+    }
+  }, []);
+
+  const loadContacts = async () => {
+    if (contacts.length > 0) return;
+    const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+    if (savedToken) {
+      await fetchContactsWithToken(savedToken, false);
+    }
+  };
+
   const login = useGoogleLogin({
     scope: 'https://www.googleapis.com/auth/contacts.readonly',
     onSuccess: (tokenResponse) => {
       if (tokenResponse.access_token) {
-          fetchContactsWithToken(tokenResponse.access_token);
+        fetchContactsWithToken(tokenResponse.access_token, true);
       } else {
-          console.error("No access token returned from Google:", tokenResponse);
-          toast.error("Failed to get access token from Google");
-          setIsConnecting(false);
+        console.error("No access token returned from Google:", tokenResponse);
+        toast.error("Failed to get access token from Google");
+        setIsConnecting(false);
       }
     },
     onError: (error) => {
@@ -91,6 +122,8 @@ export const useGoogleContacts = () => {
   const handleDisconnect = () => {
     setContacts([]);
     setIsConnected(false);
+    localStorage.removeItem(STORAGE_KEY_TOKEN);
+    localStorage.removeItem(STORAGE_KEY_TIME);
     toast.success("Google Contacts disconnected");
   };
 
@@ -102,7 +135,11 @@ export const useGoogleContacts = () => {
     isConnecting,
     connect: handleConnect,
     disconnect: handleDisconnect,
+    loadContacts,
     isDisconnecting: false,
-    refetch: () => {} 
+    refetch: () => {
+      const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+      if (savedToken) fetchContactsWithToken(savedToken, false);
+    }
   };
 };
