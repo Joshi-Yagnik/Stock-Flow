@@ -33,6 +33,16 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+@app.on_event("startup")
+async def db_schema_migration():
+    from app.database.database import engine
+    from sqlalchemy import text
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("ALTER TABLE customers ADD COLUMN IF NOT EXISTS show_in_main_list BOOLEAN DEFAULT FALSE;"))
+    except Exception as e:
+        print("Schema migration error/warning:", e)
+
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,

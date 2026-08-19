@@ -188,13 +188,23 @@ class CustomerUpdate(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     gst_number: Optional[str] = None
+    show_in_main_list: Optional[bool] = None
     is_active: Optional[bool] = None
 
 
-class CustomerResponse(CustomerBase):
+class CustomerResponse(BaseModel):
     id: str
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    gst_number: Optional[str] = None
     total_orders: int = 0
     total_spent: Decimal = Decimal("0")
+    show_in_main_list: bool = False
     is_active: bool
     created_at: datetime
 

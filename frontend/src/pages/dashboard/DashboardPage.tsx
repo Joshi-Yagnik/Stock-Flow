@@ -213,7 +213,7 @@ export default function DashboardPage() {
                   dataKey="value"
                   stroke="none"
                 >
-                  {categoryDistribution.map((entry, index) => {
+                  {categoryDistribution.map((_, index) => {
                     const colors = [
                       "hsl(var(--primary))",
                       "hsl(271, 71%, 59%)",
