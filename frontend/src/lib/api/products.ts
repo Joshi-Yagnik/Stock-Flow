@@ -120,3 +120,57 @@ export const uploadProductImage = async (id: string, file: File): Promise<{ imag
   });
   return { imageUrl: response.data.image_url };
 };
+
+
+export interface ProductImportRow {
+  row_number: number;
+  name: string;
+  sku: string | null;
+  category: string;
+  selling_price: number;
+  cost_price: number | null;
+  stock: number;
+  unit: string;
+  status: string;
+  errors: string[];
+}
+
+export interface ProductImportPreviewResponse {
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  duplicate_rows: number;
+  new_categories: number;
+  rows: ProductImportRow[];
+}
+
+export interface ProductImportExecuteResponse {
+  products_imported: number;
+  categories_created: number;
+  products_skipped: number;
+  products_failed: number;
+}
+
+export const downloadImportTemplate = async (): Promise<Blob> => {
+  const response = await api.get('/products/import/template', {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+export const uploadExcelPreview = async (file: File): Promise<ProductImportPreviewResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.post('/products/import/preview', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const executeExcelImport = async (rows: ProductImportRow[]): Promise<ProductImportExecuteResponse> => {
+  const response = await api.post('/products/import/execute', { rows });
+  return response.data;
+};

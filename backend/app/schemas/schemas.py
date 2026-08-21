@@ -72,8 +72,9 @@ class UserResponse(UserBase):
 
 
 # ─── Google Integration ────────────────────────────────────────────────────────
-class GoogleConnectRequest(BaseModel):
-    code: str
+class GoogleSyncTokensRequest(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
 
 class GoogleContactResponse(BaseModel):
     name: str
@@ -149,6 +150,36 @@ class ProductUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+
+class ProductImportRow(BaseModel):
+    row_number: int
+    name: str
+    sku: Optional[str] = None
+    category: str
+    selling_price: Decimal
+    cost_price: Optional[Decimal] = None
+    stock: int
+    unit: str
+    status: str
+    errors: list[str]
+
+class ProductImportPreviewResponse(BaseModel):
+    total_rows: int
+    valid_rows: int
+    invalid_rows: int
+    duplicate_rows: int
+    new_categories: int
+    rows: list[ProductImportRow]
+
+class ProductImportExecuteRequest(BaseModel):
+    rows: list[ProductImportRow]
+
+class ProductImportExecuteResponse(BaseModel):
+    products_imported: int
+    categories_created: int
+    products_skipped: int
+    products_failed: int
+
 class ProductResponse(ProductBase):
     id: str
     category_name: str = ""
@@ -176,7 +207,7 @@ class CustomerBase(BaseModel):
 
 
 class CustomerCreate(CustomerBase):
-    pass
+    show_in_main_list: bool = True
 
 
 class CustomerUpdate(BaseModel):
@@ -210,6 +241,17 @@ class CustomerResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class UnifiedCustomerSearchResponse(BaseModel):
+    id: str
+    type: str  # "customer" or "contact"
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    photo: Optional[str] = None
+
+class UnifiedCustomerSearchListResponse(BaseModel):
+    data: List[UnifiedCustomerSearchResponse]
+
 
 # ─── Invoice ─────────────────────────────────────────────────────────────────
 class InvoiceItemCreate(BaseModel):
@@ -238,6 +280,10 @@ class InvoiceCreate(BaseModel):
     discount_amount: Decimal = Field(default=0, ge=0)
     due_date: Optional[datetime] = None
     notes: Optional[str] = None
+    status: Optional[str] = Field(
+        default="pending",
+        pattern="^(draft|pending|paid|overdue|cancelled)$",
+    )
 
 
 class InvoiceUpdate(BaseModel):

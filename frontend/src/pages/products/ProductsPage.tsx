@@ -37,6 +37,8 @@ import { getCategories } from "@/lib/api/categories";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { Product, Category } from "@/types";
 import { toast } from "sonner";
+import { ExcelImportModal } from "./ExcelImportModal";
+import { Upload } from "lucide-react";
 
 const PAGE_SIZE = 8;
 
@@ -63,6 +65,7 @@ export default function ProductsPage() {
   
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [viewProduct, setViewProduct] = useState<Product | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Fetch Categories for the dropdown
   const { data: categories = [] } = useQuery({
@@ -114,6 +117,10 @@ export default function ProductsPage() {
                 Clear Filter
               </Button>
             )}
+            <Button variant="secondary" onClick={() => setIsImportModalOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import Excel
+            </Button>
             <Button id="add-product-btn" onClick={() => navigate("/products/add")}>
               <Plus className="h-4 w-4 mr-2" />
               Add Product
@@ -387,6 +394,15 @@ export default function ProductsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ExcelImportModal
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+        }}
+      />
     </div>
   );
 }

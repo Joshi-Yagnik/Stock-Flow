@@ -60,7 +60,6 @@ export interface Customer {
   totalOrders: number;
   totalSpent: number;
   showInMainList?: boolean;
-  isActive: boolean;
   createdAt: string;
 }
 

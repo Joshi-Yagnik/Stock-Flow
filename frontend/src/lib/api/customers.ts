@@ -15,7 +15,6 @@ const mapCustomer = (data: any): Customer => ({
   totalOrders: data.total_orders || 0,
   totalSpent: data.total_spent || 0,
   showInMainList: data.show_in_main_list || false,
-  isActive: data.is_active,
   createdAt: data.created_at,
 });
 
@@ -29,6 +28,20 @@ export interface CustomerIdentifier {
 export const getAllCustomerIdentifiers = async (): Promise<CustomerIdentifier[]> => {
   const response = await api.get('/customers/all-identifiers');
   return response.data;
+};
+
+export interface UnifiedCustomerSearchResponse {
+  id: string;
+  type: 'customer' | 'contact';
+  name: string;
+  phone?: string;
+  email?: string;
+  photo?: string;
+}
+
+export const searchCustomersAndContacts = async (q: string): Promise<UnifiedCustomerSearchResponse[]> => {
+  const response = await api.get('/customers/search', { params: { q } });
+  return response.data.data;
 };
 
 export const getCustomers = async (

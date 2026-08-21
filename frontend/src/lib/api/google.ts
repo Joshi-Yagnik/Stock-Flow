@@ -7,8 +7,8 @@ export interface GoogleContact {
   photo?: string;
 }
 
-export const connectGoogle = async (code: string) => {
-  const response = await api.post('/google/connect', { code });
+export const syncGoogleTokens = async (accessToken: string, refreshToken?: string) => {
+  const response = await api.post('/google/sync-tokens', { access_token: accessToken, refresh_token: refreshToken });
   return response.data;
 };
 

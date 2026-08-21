@@ -10,6 +10,8 @@ from app.schemas.schemas import (
     CustomerUpdate,
     CustomerResponse,
     PaginatedResponse,
+    UnifiedCustomerSearchListResponse,
+    UnifiedCustomerSearchResponse,
 )
 from app.core.dependencies import get_current_active_user
 from app.models.models import User, Customer, Invoice
@@ -32,16 +34,113 @@ async def list_all_customer_identifiers(
     db: AsyncSession = Depends(get_db),
 ):
     """Get lightweight list of all customer identifiers for duplicate/added checking."""
+    has_invoice_subquery = (
+        select(Invoice.id)
+        .where(Invoice.customer_id == Customer.id)
+        .where(Invoice.created_by == current_user.id)
+        .exists()
+    )
     result = await db.execute(
         select(Customer.id, Customer.name, Customer.email, Customer.phone)
         .where(Customer.owner_id == current_user.id)
         .where(Customer.is_active == True)
+        .where(
+            or_(
+                has_invoice_subquery,
+                Customer.show_in_main_list == True
+            )
+        )
     )
     rows = result.all()
     return [
         CustomerIdentifier(id=r[0], name=r[1], email=r[2], phone=r[3])
         for r in rows
     ]
+
+@router.get("/search", response_model=UnifiedCustomerSearchListResponse)
+async def search_customers_and_contacts(
+    q: str = Query(""),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Unified search across local Customers and Google Contacts."""
+    clean_search = q.strip().lower()
+    
+    results = []
+
+    # 1. Search Local Customers
+    base_query = (
+        select(Customer)
+        .where(Customer.owner_id == current_user.id)
+        .where(Customer.is_active == True)
+    )
+
+    if clean_search:
+        search_filter = or_(
+            Customer.name.ilike(f"%{clean_search}%"),
+            Customer.email.ilike(f"%{clean_search}%"),
+            Customer.phone.ilike(f"%{clean_search}%"),
+        )
+        base_query = base_query.where(search_filter)
+
+    customer_res = await db.execute(base_query.limit(20))
+    local_customers = customer_res.scalars().all()
+
+    for c in local_customers:
+        results.append(
+            UnifiedCustomerSearchResponse(
+                id=c.id,
+                type="customer",
+                name=c.name,
+                phone=c.phone,
+                email=c.email,
+                photo=None
+            )
+        )
+
+    # 2. Search Google Contacts (if connected)
+    try:
+        from app.routers.google import get_google_contacts
+        google_data = await get_google_contacts(current_user=current_user, db=db)
+        
+        for gc in google_data.contacts:
+            # Client side filtering since Google People API search is more complex to set up dynamically here
+            match = False
+            if not clean_search:
+                match = True
+            else:
+                if gc.name and clean_search in gc.name.lower():
+                    match = True
+                elif gc.email and clean_search in gc.email.lower():
+                    match = True
+                elif gc.phone and clean_search in gc.phone.lower():
+                    match = True
+                    
+            if match:
+                # Use a dummy ID for contacts since they don't have a local DB ID yet
+                import uuid
+                contact_id = f"contact_{uuid.uuid4().hex[:8]}"
+                results.append(
+                    UnifiedCustomerSearchResponse(
+                        id=contact_id,
+                        type="contact",
+                        name=gc.name,
+                        phone=gc.phone,
+                        email=gc.email,
+                        photo=gc.photo
+                    )
+                )
+    except Exception:
+        # Ignore if not connected to Google or API fails
+        pass
+
+    # Sort results to have exact matches or similar at the top
+    if clean_search:
+        results.sort(key=lambda x: (not x.name.lower().startswith(clean_search), x.name.lower()))
+
+    # Limit total combined results to prevent massive dropdowns
+    return UnifiedCustomerSearchListResponse(data=results[:30])
+
 
 @router.get("/", response_model=CustomerListResponse)
 async def list_customers(
@@ -55,27 +154,26 @@ async def list_customers(
     """List customers for the authenticated user."""
     clean_search = search.strip() if search else ""
 
+    has_invoice_subquery = (
+        select(Invoice.id)
+        .where(Invoice.customer_id == Customer.id)
+        .where(Invoice.created_by == current_user.id)
+        .exists()
+    )
+
     base_query = (
         select(Customer)
         .where(Customer.owner_id == current_user.id)
         .where(Customer.is_active == is_active)
-    )
-
-    if not clean_search:
-        # Show customers who have at least one invoice OR show_in_main_list == True
-        has_invoice_subquery = (
-            select(Invoice.id)
-            .where(Invoice.customer_id == Customer.id)
-            .where(Invoice.created_by == current_user.id)
-            .exists()
-        )
-        base_query = base_query.where(
+        .where(
             or_(
                 has_invoice_subquery,
                 Customer.show_in_main_list == True
             )
         )
-    else:
+    )
+
+    if clean_search:
         # Search mode: match name, email, phone, company
         search_filter = or_(
             Customer.name.ilike(f"%{clean_search}%"),
@@ -141,6 +239,7 @@ async def create_customer(
     clean_phone = data.phone.strip() if data.phone and data.phone.strip() else None
 
     # Check if customer with this email already exists for this owner
+    existing_customer = None
     if clean_email:
         existing_email = await db.execute(
             select(Customer).where(
@@ -148,25 +247,30 @@ async def create_customer(
                 Customer.email == clean_email
             )
         )
-        if existing_email.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Customer with this email already exists."
-            )
+        existing_customer = existing_email.scalar_one_or_none()
 
     # Check if customer with this phone already exists for this owner
-    if clean_phone:
+    if not existing_customer and clean_phone:
         existing_phone = await db.execute(
             select(Customer).where(
                 Customer.owner_id == current_user.id,
                 Customer.phone == clean_phone
             )
         )
-        if existing_phone.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Customer with this phone number already exists."
-            )
+        existing_customer = existing_phone.scalar_one_or_none()
+        
+    if existing_customer:
+        # If it exists, update it to be active and visible in the main list
+        existing_customer.is_active = True
+        existing_customer.show_in_main_list = existing_customer.show_in_main_list or data.show_in_main_list
+        
+        # Optionally update fields if they were missing, but we keep existing data primarily
+        if data.name and not existing_customer.name:
+            existing_customer.name = data.name.strip()
+            
+        await db.commit()
+        await db.refresh(existing_customer)
+        return existing_customer
 
     customer = Customer(
         owner_id=current_user.id,
@@ -178,6 +282,7 @@ async def create_customer(
         city=data.city,
         state=data.state,
         gst_number=data.gst_number,
+        show_in_main_list=data.show_in_main_list,
     )
     db.add(customer)
     await db.commit()
@@ -257,6 +362,7 @@ async def bulk_create_customers(
                 city=item.city[:100] if item.city else None,
                 state=item.state[:100] if item.state else None,
                 gst_number=item.gst_number[:20] if item.gst_number else None,
+                show_in_main_list=True,
             )
             new_customers.append(customer)
             if clean_email:

@@ -144,6 +144,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/billing/edit/:invoiceId"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BillingPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/invoices"
         element={
           <ProtectedRoute>

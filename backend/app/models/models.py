@@ -210,6 +210,10 @@ class Invoice(Base):
         back_populates="invoice", cascade="all, delete-orphan"
     )
 
+    @property
+    def customer_name(self) -> str:
+        return self.customer.name if self.customer else ""
+
 
 # ─── Invoice Item ─────────────────────────────────────────────────────────────
 class InvoiceItem(Base):
@@ -227,6 +231,10 @@ class InvoiceItem(Base):
     # Relationships
     invoice: Mapped["Invoice"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship(back_populates="invoice_items")
+
+    @property
+    def product_name(self) -> str:
+        return self.product.name if self.product else ""
 
 
 # ─── Stock Transaction ────────────────────────────────────────────────────────

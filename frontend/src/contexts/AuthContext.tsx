@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { syncGoogleTokens } from '@/lib/api/google';
 
 export interface User {
   id: string;
@@ -45,6 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(mapSupabaseUser(session?.user ?? null));
+      
+      if (session?.provider_token) {
+        try {
+          await syncGoogleTokens(session.provider_token, session.provider_refresh_token ?? undefined);
+        } catch (err) {
+          console.error("Failed to sync Google tokens on init", err);
+        }
+      }
     } catch (error) {
       console.error("Error checking auth session:", error);
       setUser(null);
@@ -57,8 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setUser(mapSupabaseUser(session?.user ?? null));
+        
+        if (session?.provider_token) {
+          try {
+            await syncGoogleTokens(session.provider_token, session.provider_refresh_token ?? undefined);
+          } catch (err) {
+            console.error("Failed to sync Google tokens on auth change", err);
+          }
+        }
+
         setIsLoading(false);
       }
     );

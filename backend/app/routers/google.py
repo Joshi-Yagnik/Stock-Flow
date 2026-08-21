@@ -8,7 +8,7 @@ import os
 from app.database.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.models.models import User, GoogleConnection
-from app.schemas.schemas import GoogleConnectRequest, GoogleContactsListResponse, GoogleContactResponse
+from app.schemas.schemas import GoogleSyncTokensRequest, GoogleContactsListResponse, GoogleContactResponse
 
 router = APIRouter()
 
@@ -19,58 +19,35 @@ GOOGLE_REDIRECT_URI = "http://localhost:5173"  # Standard redirect for @react-oa
 def get_current_utc():
     return datetime.now(timezone.utc)
 
-@router.post("/connect")
-async def connect_google(
-    request: GoogleConnectRequest,
+@router.post("/sync-tokens")
+async def sync_google_tokens(
+    request: GoogleSyncTokensRequest,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-        raise HTTPException(status_code=500, detail="Google OAuth is not configured on the server.")
-
-    # Exchange the code for tokens
-    async with httpx.AsyncClient() as client:
-        token_response = await client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": request.code,
-                "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
-                "redirect_uri": GOOGLE_REDIRECT_URI,
-                "grant_type": "authorization_code"
-            }
-        )
-
-    if token_response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Failed to connect to Google.")
-
-    token_data = token_response.json()
-    access_token = token_data.get("access_token")
-    refresh_token = token_data.get("refresh_token")
-    expires_in = token_data.get("expires_in", 3599)
-
-    expires_at = get_current_utc() + timedelta(seconds=expires_in)
-
-    # Check if a connection already exists
+    # Store or update the tokens
     result = await db.execute(select(GoogleConnection).where(GoogleConnection.user_id == current_user.id))
     connection = result.scalar_one_or_none()
 
+    # The access token from Supabase usually lives for 1 hour
+    expires_at = get_current_utc() + timedelta(seconds=3599)
+
     if connection:
-        connection.access_token = access_token
-        if refresh_token:
-            connection.refresh_token = refresh_token
+        connection.access_token = request.access_token
+        if request.refresh_token:
+            connection.refresh_token = request.refresh_token
         connection.expires_at = expires_at
     else:
         connection = GoogleConnection(
             user_id=current_user.id,
-            access_token=access_token,
-            refresh_token=refresh_token,
+            access_token=request.access_token,
+            refresh_token=request.refresh_token,
             expires_at=expires_at
         )
         db.add(connection)
 
     await db.commit()
-    return {"message": "Google Contacts connected successfully"}
+    return {"message": "Google Contacts synced successfully"}
 
 @router.get("/contacts", response_model=GoogleContactsListResponse)
 async def get_google_contacts(
@@ -132,20 +109,26 @@ async def get_google_contacts(
     
     formatted_contacts = []
     for conn in connections:
-        name = conn.get("names", [{}])[0].get("displayName")
-        if not name:
-            continue
-            
-        phone = None
-        phones = conn.get("phoneNumbers", [])
-        if phones:
-            phone = phones[0].get("value")
-            
+        # Get emails
         email = None
         emails = conn.get("emailAddresses", [])
         if emails:
             email = emails[0].get("value")
             
+        # Get phones
+        phone = None
+        phones = conn.get("phoneNumbers", [])
+        if phones:
+            phone = phones[0].get("value")
+
+        # Get name with fallback
+        name = conn.get("names", [{}])[0].get("displayName")
+        if not name:
+            name = email if email else phone
+            if not name:
+                continue
+                
+        # Get photo
         photo = None
         photos = conn.get("photos", [])
         if photos:
@@ -157,6 +140,9 @@ async def get_google_contacts(
             email=email,
             photo=photo
         ))
+
+    # Sort contacts alphabetically by name (case-insensitive)
+    formatted_contacts.sort(key=lambda x: (x.name or "").lower())
 
     return GoogleContactsListResponse(contacts=formatted_contacts)
 

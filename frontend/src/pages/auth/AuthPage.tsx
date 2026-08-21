@@ -137,6 +137,11 @@ export default function AuthPage() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'https://www.googleapis.com/auth/contacts.readonly',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         },
       });
       if (error) {
@@ -147,12 +152,12 @@ export default function AuthPage() {
     }
   };
 
-  const inputClassName = "h-11 md:h-12 rounded-[8px] bg-input border border-border placeholder:text-muted-foreground text-foreground text-[14px] focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring focus-visible:ring-offset-0 transition-all";
-  const labelClassName = "text-foreground font-semibold mb-2 block text-[13px] md:text-[14px]";
-  const cardClassName = "backface-hidden w-full flex flex-col justify-center p-6 md:p-8 rounded-[16px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border transition-all max-h-[85vh]";
+  const inputClassName = "h-10 md:h-11 rounded-[8px] bg-input border border-border placeholder:text-muted-foreground text-foreground text-[13px] md:text-[14px] focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring focus-visible:ring-offset-0 transition-all";
+  const labelClassName = "text-foreground font-semibold mb-1 block text-[12px] md:text-[13px]";
+  const cardClassName = "backface-hidden w-full flex flex-col justify-center p-5 md:p-6 rounded-[16px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border transition-all";
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden flex items-center justify-center bg-background font-sans relative overflow-x-hidden overflow-y-auto">
+    <div className="h-screen min-h-screen overflow-hidden flex flex-col justify-center bg-background font-sans relative py-4">
       
       {/* Floating Theme Toggle */}
       <div className="absolute top-4 right-4 z-50">
@@ -167,7 +172,7 @@ export default function AuthPage() {
       </div>
 
       {/* Decorative Background Waves (SVG) */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Left Waves */}
         <svg className="absolute left-0 bottom-0 w-full md:w-[50vw] h-[60vh] text-primary dark:text-primary" preserveAspectRatio="none" viewBox="0 0 500 500">
           <path d="M0,200 C150,250 250,400 500,500 L0,500 Z" fill="currentColor" className="opacity-[0.1] dark:opacity-[0.04]" />
@@ -181,10 +186,10 @@ export default function AuthPage() {
       </div>
 
       {/* Centered Content Wrapper */}
-      <div className="relative w-[90%] max-w-[390px] z-10 flex flex-col items-center justify-center mx-auto mt-4 mb-8">
+      <div className="relative w-[90%] max-w-[390px] z-10 flex flex-col items-center mx-auto">
         
         {/* Fixed Branding */}
-        <div className="flex flex-col items-center mb-4 pointer-events-none">
+        <div className="flex flex-col items-center mb-3 pointer-events-none">
           <div className="flex items-center space-x-2.5">
             <Zap className="h-7 w-7 text-primary fill-primary" />
             <span className="text-[26px] font-bold text-foreground tracking-tight">StockFlow</span>
@@ -202,14 +207,14 @@ export default function AuthPage() {
               className={cardClassName}
               style={{ gridArea: "1 / 1 / 2 / 2" }}
             >
-              <div className="mb-7 text-center">
-                <h1 className="text-[28px] font-bold text-foreground leading-tight mb-2">Sign in</h1>
-                <p className="text-[14px] text-muted-foreground">
+              <div className="mb-4 text-center">
+                <h1 className="text-[24px] font-bold text-foreground leading-tight mb-1">Sign in</h1>
+                <p className="text-[13px] text-muted-foreground">
                   Welcome back! Enter your credentials.
                 </p>
               </div>
 
-              <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-4" noValidate>
+              <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-3" noValidate>
                 <div>
                   <Label htmlFor="login-email" className={labelClassName}>Email</Label>
                   <Input
@@ -261,7 +266,7 @@ export default function AuthPage() {
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2.5 pt-1">
+                <div className="flex items-center space-x-2.5 pt-0.5">
                   <input 
                     type="checkbox" 
                     id="rememberMe"
@@ -276,7 +281,7 @@ export default function AuthPage() {
                 <Button
                   id="login-submit"
                   type="submit"
-                  className="w-full h-11 md:h-12 mt-2 rounded-[8px] text-primary-foreground text-[15px] font-semibold border-0 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:scale-100 shadow-sm"
+                  className="w-full h-10 md:h-11 mt-2 rounded-[8px] text-primary-foreground text-[14px] md:text-[15px] font-semibold border-0 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:scale-100 shadow-sm"
                   style={{ background: resolvedTheme === 'dark' ? 'linear-gradient(90deg, #A85B1F, #C87527)' : 'linear-gradient(90deg, #A85B1F, #C27832)' }}
                   loading={isLoginSubmitting}
                   disabled={!isLoginValid || isLoginSubmitting}
@@ -285,7 +290,7 @@ export default function AuthPage() {
                 </Button>
               </form>
 
-              <div className="relative my-6">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border"></div>
                 </div>
@@ -299,7 +304,7 @@ export default function AuthPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-11 md:h-12 rounded-[8px] bg-card border border-border text-foreground hover:bg-muted/50 transition-all font-semibold flex items-center justify-center space-x-2.5 shadow-sm"
+                className="w-full h-10 md:h-11 rounded-[8px] bg-card border border-border text-foreground hover:bg-muted/50 transition-all font-semibold flex items-center justify-center space-x-2.5 shadow-sm text-[13px] md:text-[14px]"
                 onClick={handleGoogleSignup}
               >
                 <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24">
@@ -311,7 +316,7 @@ export default function AuthPage() {
                 <span>Sign in with Google</span>
               </Button>
 
-              <p className="mt-7 text-center text-[13px] md:text-[14px] text-muted-foreground">
+              <p className="mt-4 text-center text-[12px] md:text-[13px] text-muted-foreground">
                 Don't have an account?{" "}
                 <button
                   type="button"
@@ -328,14 +333,14 @@ export default function AuthPage() {
               className={`${cardClassName} rotate-y-180 transition-all overflow-hidden`}
               style={{ gridArea: "1 / 1 / 2 / 2" }}
             >
-              <div className="mb-6 text-center">
-                <h1 className="text-[28px] font-bold text-foreground leading-tight mb-2">Create account</h1>
-                <p className="text-[14px] text-muted-foreground">
+              <div className="mb-4 text-center">
+                <h1 className="text-[24px] font-bold text-foreground leading-tight mb-1">Create account</h1>
+                <p className="text-[13px] text-muted-foreground">
                   Streamline your wholesale business.
                 </p>
               </div>
 
-              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4" noValidate>
+              <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-2.5" noValidate>
                 <div>
                   <Label htmlFor="reg-name" className={labelClassName}>Full Name</Label>
                   <Input
@@ -405,7 +410,7 @@ export default function AuthPage() {
                 <Button
                   id="register-submit"
                   type="submit"
-                  className="w-full h-11 md:h-12 mt-3 rounded-[8px] text-primary-foreground text-[15px] font-semibold border-0 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:scale-100 shadow-sm"
+                  className="w-full h-10 md:h-11 mt-2 rounded-[8px] text-primary-foreground text-[14px] md:text-[15px] font-semibold border-0 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-50 disabled:active:scale-100 shadow-sm"
                   style={{ background: resolvedTheme === 'dark' ? 'linear-gradient(90deg, #A85B1F, #C87527)' : 'linear-gradient(90deg, #A85B1F, #C27832)' }}
                   loading={isRegisterSubmitting}
                   disabled={!isRegisterValid || isRegisterSubmitting}
@@ -414,7 +419,7 @@ export default function AuthPage() {
                 </Button>
               </form>
 
-              <div className="relative my-6">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border"></div>
                 </div>
@@ -428,7 +433,7 @@ export default function AuthPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-11 md:h-12 rounded-[8px] bg-card border border-border text-foreground hover:bg-muted/50 transition-all font-semibold flex items-center justify-center space-x-2.5 shadow-sm"
+                className="w-full h-10 md:h-11 rounded-[8px] bg-card border border-border text-foreground hover:bg-muted/50 transition-all font-semibold flex items-center justify-center space-x-2.5 shadow-sm text-[13px] md:text-[14px]"
                 onClick={handleGoogleSignup}
               >
                 <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24">
@@ -440,7 +445,7 @@ export default function AuthPage() {
                 <span>Sign up with Google</span>
               </Button>
 
-              <p className="mt-7 text-center text-[13px] md:text-[14px] text-muted-foreground">
+              <p className="mt-4 text-center text-[12px] md:text-[13px] text-muted-foreground">
                 Already have an account?{" "}
                 <button 
                   type="button"
